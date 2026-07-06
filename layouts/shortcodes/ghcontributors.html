@@ -18,8 +18,22 @@
     padding-left: 4px;
   }
 </style>
+
 <div class="ghContributors">
-  {{ $url := .Get 0 }} {{ range getJSON $url }}
+  {{ $url := .Get 0 }}
+  {{ $contributors := "" }}
+  
+  {{/* Sử dụng resources.GetRemote thay thế cho getJSON */}}
+  {{ with resources.GetRemote $url }}
+    {{ with .Err }}
+      {{ warnf "%s" . }}
+    {{ else }}
+      {{ $contributors = . | transform.Unmarshal }}
+    {{ end }}
+  {{ end }}
+
+  {{/* Vòng lặp duyệt qua danh sách contributors */}}
+  {{ range $contributors }}
   <div>
     <img
       src="{{.avatar_url}}"
@@ -27,7 +41,7 @@
       width="32"
       height="32"
       style="
-        height: 32px;
+        width: 32px;
         height: 32px;
         margin-bottom: 0.25em;
         vertical-align: middle;
