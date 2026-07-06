@@ -1,242 +1,135 @@
 ---
-title : "Prerequiste"
-date : 2024-01-01 
-weight : 2 
+title : "Prerequisites"
+date : 2026-04-12
+weight : 2
 chapter : false
 pre : " <b> 5.2. </b> "
 ---
 
-#### IAM permissions
-Add the following IAM permission policy to your user account to deploy and cleanup this workshop.
-```
+#### 1. AWS account & Region
+
+In this workshop we will use the **Singapore (ap-southeast-1)** region. Please ensure that you:
+* Are logged into the AWS Console with a user that has Administrator access (or the IAM policy below).
+* Have **Singapore** selected in the top-right corner of the Console.
+
+#### 2. Enable Model Access in Amazon Bedrock
+
+Before you can invoke Claude or Titan, you need to **request model access**:
+
+1. Open the Amazon Bedrock Console in the Singapore region.
+2. Choose **Model access** in the left menu under **Bedrock configurations**.
+3. Click **Manage model access** and select these models:
+   * **Anthropic:** Claude 3.5 Sonnet, Claude 3 Haiku
+   * **Amazon:** Titan Embeddings v2, Titan Text G1 - Express
+   * (optional) **Meta:** Llama 3 8B Instruct
+4. Click **Request model access** and wait a few minutes for AWS to approve.
+
+![model access](/images/5-Workshop/5.2-Prerequisite/model-access.png)
+
+#### 3. Create an IAM policy for the workshop user
+
+Attach the following policy to your IAM user (or simply use AdministratorAccess for the workshop):
+
+```json
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "VisualEditor0",
-            "Effect": "Allow",
-            "Action": [
-                "cloudformation:*",
-                "cloudwatch:*",
-                "ec2:AcceptTransitGatewayPeeringAttachment",
-                "ec2:AcceptTransitGatewayVpcAttachment",
-                "ec2:AllocateAddress",
-                "ec2:AssociateAddress",
-                "ec2:AssociateIamInstanceProfile",
-                "ec2:AssociateRouteTable",
-                "ec2:AssociateSubnetCidrBlock",
-                "ec2:AssociateTransitGatewayRouteTable",
-                "ec2:AssociateVpcCidrBlock",
-                "ec2:AttachInternetGateway",
-                "ec2:AttachNetworkInterface",
-                "ec2:AttachVolume",
-                "ec2:AttachVpnGateway",
-                "ec2:AuthorizeSecurityGroupEgress",
-                "ec2:AuthorizeSecurityGroupIngress",
-                "ec2:CreateClientVpnEndpoint",
-                "ec2:CreateClientVpnRoute",
-                "ec2:CreateCustomerGateway",
-                "ec2:CreateDhcpOptions",
-                "ec2:CreateFlowLogs",
-                "ec2:CreateInternetGateway",
-                "ec2:CreateLaunchTemplate",
-                "ec2:CreateNetworkAcl",
-                "ec2:CreateNetworkInterface",
-                "ec2:CreateNetworkInterfacePermission",
-                "ec2:CreateRoute",
-                "ec2:CreateRouteTable",
-                "ec2:CreateSecurityGroup",
-                "ec2:CreateSubnet",
-                "ec2:CreateSubnetCidrReservation",
-                "ec2:CreateTags",
-                "ec2:CreateTransitGateway",
-                "ec2:CreateTransitGatewayPeeringAttachment",
-                "ec2:CreateTransitGatewayPrefixListReference",
-                "ec2:CreateTransitGatewayRoute",
-                "ec2:CreateTransitGatewayRouteTable",
-                "ec2:CreateTransitGatewayVpcAttachment",
-                "ec2:CreateVpc",
-                "ec2:CreateVpcEndpoint",
-                "ec2:CreateVpcEndpointConnectionNotification",
-                "ec2:CreateVpcEndpointServiceConfiguration",
-                "ec2:CreateVpnConnection",
-                "ec2:CreateVpnConnectionRoute",
-                "ec2:CreateVpnGateway",
-                "ec2:DeleteCustomerGateway",
-                "ec2:DeleteFlowLogs",
-                "ec2:DeleteInternetGateway",
-                "ec2:DeleteNetworkInterface",
-                "ec2:DeleteNetworkInterfacePermission",
-                "ec2:DeleteRoute",
-                "ec2:DeleteRouteTable",
-                "ec2:DeleteSecurityGroup",
-                "ec2:DeleteSubnet",
-                "ec2:DeleteSubnetCidrReservation",
-                "ec2:DeleteTags",
-                "ec2:DeleteTransitGateway",
-                "ec2:DeleteTransitGatewayPeeringAttachment",
-                "ec2:DeleteTransitGatewayPrefixListReference",
-                "ec2:DeleteTransitGatewayRoute",
-                "ec2:DeleteTransitGatewayRouteTable",
-                "ec2:DeleteTransitGatewayVpcAttachment",
-                "ec2:DeleteVpc",
-                "ec2:DeleteVpcEndpoints",
-                "ec2:DeleteVpcEndpointServiceConfigurations",
-                "ec2:DeleteVpnConnection",
-                "ec2:DeleteVpnConnectionRoute",
-                "ec2:Describe*",
-                "ec2:DetachInternetGateway",
-                "ec2:DisassociateAddress",
-                "ec2:DisassociateRouteTable",
-                "ec2:GetLaunchTemplateData",
-                "ec2:GetTransitGatewayAttachmentPropagations",
-                "ec2:ModifyInstanceAttribute",
-                "ec2:ModifySecurityGroupRules",
-                "ec2:ModifyTransitGatewayVpcAttachment",
-                "ec2:ModifyVpcAttribute",
-                "ec2:ModifyVpcEndpoint",
-                "ec2:ReleaseAddress",
-                "ec2:ReplaceRoute",
-                "ec2:RevokeSecurityGroupEgress",
-                "ec2:RevokeSecurityGroupIngress",
-                "ec2:RunInstances",
-                "ec2:StartInstances",
-                "ec2:StopInstances",
-                "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
-                "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
-                "iam:AddRoleToInstanceProfile",
-                "iam:AttachRolePolicy",
-                "iam:CreateInstanceProfile",
-                "iam:CreatePolicy",
-                "iam:CreateRole",
-                "iam:DeleteInstanceProfile",
-                "iam:DeletePolicy",
-                "iam:DeleteRole",
-                "iam:DeleteRolePolicy",
-                "iam:DetachRolePolicy",
-                "iam:GetInstanceProfile",
-                "iam:GetPolicy",
-                "iam:GetRole",
-                "iam:GetRolePolicy",
-                "iam:ListPolicyVersions",
-                "iam:ListRoles",
-                "iam:PassRole",
-                "iam:PutRolePolicy",
-                "iam:RemoveRoleFromInstanceProfile",
-                "lambda:CreateFunction",
-                "lambda:DeleteFunction",
-                "lambda:DeleteLayerVersion",
-                "lambda:GetFunction",
-                "lambda:GetLayerVersion",
-                "lambda:InvokeFunction",
-                "lambda:PublishLayerVersion",
-                "logs:CreateLogGroup",
-                "logs:DeleteLogGroup",
-                "logs:DescribeLogGroups",
-                "logs:PutRetentionPolicy",
-                "route53:ChangeTagsForResource",
-                "route53:CreateHealthCheck",
-                "route53:CreateHostedZone",
-                "route53:CreateTrafficPolicy",
-                "route53:DeleteHostedZone",
-                "route53:DisassociateVPCFromHostedZone",
-                "route53:GetHostedZone",
-                "route53:ListHostedZones",
-                "route53domains:ListDomains",
-                "route53domains:ListOperations",
-                "route53domains:ListTagsForDomain",
-                "route53resolver:AssociateResolverEndpointIpAddress",
-                "route53resolver:AssociateResolverRule",
-                "route53resolver:CreateResolverEndpoint",
-                "route53resolver:CreateResolverRule",
-                "route53resolver:DeleteResolverEndpoint",
-                "route53resolver:DeleteResolverRule",
-                "route53resolver:DisassociateResolverEndpointIpAddress",
-                "route53resolver:DisassociateResolverRule",
-                "route53resolver:GetResolverEndpoint",
-                "route53resolver:GetResolverRule",
-                "route53resolver:ListResolverEndpointIpAddresses",
-                "route53resolver:ListResolverEndpoints",
-                "route53resolver:ListResolverRuleAssociations",
-                "route53resolver:ListResolverRules",
-                "route53resolver:ListTagsForResource",
-                "route53resolver:UpdateResolverEndpoint",
-                "route53resolver:UpdateResolverRule",
-                "s3:AbortMultipartUpload",
-                "s3:CreateBucket",
-                "s3:DeleteBucket",
-                "s3:DeleteObject",
-                "s3:GetAccountPublicAccessBlock",
-                "s3:GetBucketAcl",
-                "s3:GetBucketOwnershipControls",
-                "s3:GetBucketPolicy",
-                "s3:GetBucketPolicyStatus",
-                "s3:GetBucketPublicAccessBlock",
-                "s3:GetObject",
-                "s3:GetObjectVersion",
-                "s3:GetBucketVersioning",
-                "s3:ListAccessPoints",
-                "s3:ListAccessPointsForObjectLambda",
-                "s3:ListAllMyBuckets",
-                "s3:ListBucket",
-                "s3:ListBucketMultipartUploads",
-                "s3:ListBucketVersions",
-                "s3:ListJobs",
-                "s3:ListMultipartUploadParts",
-                "s3:ListMultiRegionAccessPoints",
-                "s3:ListStorageLensConfigurations",
-                "s3:PutAccountPublicAccessBlock",
-                "s3:PutBucketAcl",
-                "s3:PutBucketPolicy",
-                "s3:PutBucketPublicAccessBlock",
-                "s3:PutObject",
-                "secretsmanager:CreateSecret",
-                "secretsmanager:DeleteSecret",
-                "secretsmanager:DescribeSecret",
-                "secretsmanager:GetSecretValue",
-                "secretsmanager:ListSecrets",
-                "secretsmanager:ListSecretVersionIds",
-                "secretsmanager:PutResourcePolicy",
-                "secretsmanager:TagResource",
-                "secretsmanager:UpdateSecret",
-                "sns:ListTopics",
-                "ssm:DescribeInstanceProperties",
-                "ssm:DescribeSessions",
-                "ssm:GetConnectionStatus",
-                "ssm:GetParameters",
-                "ssm:ListAssociations",
-                "ssm:ResumeSession",
-                "ssm:StartSession",
-                "ssm:TerminateSession"
-            ],
-            "Resource": "*"
-        }
-    ]
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "BedrockWorkshop",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:*",
+        "s3:CreateBucket",
+        "s3:DeleteBucket",
+        "s3:GetObject",
+        "s3:GetObjectVersion",
+        "s3:ListBucket",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:GetBucketPolicy",
+        "s3:PutBucketPolicy",
+        "s3:GetBucketCORS",
+        "s3:PutBucketCORS",
+        "aoss:*",
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:PassRole",
+        "iam:CreatePolicy",
+        "iam:DeletePolicy",
+        "iam:GetRole",
+        "iam:GetPolicy",
+        "lambda:CreateFunction",
+        "lambda:DeleteFunction",
+        "lambda:GetFunction",
+        "lambda:InvokeFunction",
+        "lambda:UpdateFunctionCode",
+        "lambda:UpdateFunctionConfiguration",
+        "apigateway:*",
+        "cloudfront:*",
+        "logs:CreateLogGroup",
+        "logs:DeleteLogGroup",
+        "logs:DescribeLogGroups",
+        "logs:PutRetentionPolicy",
+        "cloudwatch:GetMetricData",
+        "cloudwatch:GetMetricStatistics",
+        "cloudwatch:ListMetrics",
+        "cloudwatch:DescribeAlarms"
+      ],
+      "Resource": "*"
+    }
+  ]
 }
-
 ```
 
-#### Provision resources using CloudFormation
+> 💡 **Note:** Most of the cost is in Bedrock (per-token). A single Claude 3.5 Sonnet query is around $0.003 input + $0.015 output per 1K tokens. A few dozen queries during the workshop cost less than $1. OpenSearch Serverless has a minimum charge of $0.24/OCU/hour — remember to clean up after the workshop.
 
-In this lab, we will use **N.Virginia region (us-east-1)**.
+#### 4. Install local tools
 
-To prepare the workshop environment, deploy this **CloudFormation Template** (click link): [PrivateLinkWorkshop ](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https://s3.us-east-1.amazonaws.com/reinvent-endpoints-builders-session/Nested.yaml&stackName=PLCloudSetup). Accept all of the defaults when deploying the template. 
+* **AWS CLI v2** (installed in Week 1): `aws --version`
+* **Node.js 18+** and **npm** to build the React frontend (optional if you use the prebuilt one).
+* **Python 3.10+** and **boto3** (already available on Amazon Linux 2023 if you use Cloud9/CloudShell).
 
-![create stack](/images/5-Workshop/5.2-Prerequisite/create-stack1.png)
+```bash
+# Update AWS CLI & boto3
+pip install --upgrade boto3 awscli
+aws configure  # enter Access Key, Secret Key, region ap-southeast-1, output json
+```
 
-+ Tick 2 acknowledgement boxes
-+ Choose **Create stack**
+#### 5. Create the source documents S3 bucket
 
-![create stack](/images/5-Workshop/5.2-Prerequisite/create-stack2.png)
+```bash
+# Create the documents bucket for the Knowledge Base
+aws s3 mb s3://fcaj-bedrock-docs-<your-id> --region ap-southeast-1
+aws s3api put-bucket-versioning \
+  --bucket fcaj-bedrock-docs-<your-id> \
+  --versioning-configuration Status=Enabled
 
-The **ClouddFormation** deployment requires about 15 minutes to complete.
+# Upload some sample documents
+curl -o aws-overview.pdf https://docs.aws.amazon.com/whitepapers/latest/aws-overview/introduction.html
+aws s3 cp aws-overview.pdf s3://fcaj-bedrock-docs-<your-id>/
+```
 
-![complete](/images/5-Workshop/5.2-Prerequisite/complete.png)
+#### 6. Verify the environment
 
-+ **2 VPCs** have been created
+```bash
+# Verify Bedrock access
+aws bedrock list-foundation-models --region ap-southeast-1 \
+  --query 'modelSummaries[?contains(modelId, `claude`) || contains(modelId, `titan-embed`)].modelId'
 
-![vpcs](/images/5-Workshop/5.2-Prerequisite/vpcs.png)
+# Verify S3 bucket
+aws s3 ls s3://fcaj-bedrock-docs-<your-id>/
 
-+ **3 EC2s** have been created
+# Verify IAM user
+aws sts get-caller-identity
+```
 
-![EC2](/images/5-Workshop/5.2-Prerequisite/ec2.png)
+If all three commands return successfully, you are ready for the next part.
+
+![prereq complete](/images/5-Workshop/5.2-Prerequisite/complete.png)
+
+#### References
+* [Amazon Bedrock Model Access](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)
+* [Setting up Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/setting-up.html)
+* [AWS CLI Configuration](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html)

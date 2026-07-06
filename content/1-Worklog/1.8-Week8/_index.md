@@ -1,57 +1,70 @@
----
+﻿---
 title: "Week 8 Worklog"
-date: 2024-01-01
-weight: 1
+date: 2026-05-31
+weight: 8
 chapter: false
 pre: " <b> 1.8. </b> "
 ---
-{{% notice warning %}} 
-⚠️ **Note:** The following information is for reference purposes only. Please **do not copy verbatim** for your own report, including this warning.
-{{% /notice %}}
-
-
 ### Week 8 Objectives:
-
-* Connect and get acquainted with members of First Cloud AI Journey.
-* Understand basic AWS services, how to use the console & CLI.
+* Get familiar with Data Engineering on AWS: Glue, Athena, QuickSight.
+* Process real-time data with Amazon Kinesis and MSK (Kafka).
+* Build a data pipeline from ingestion → processing → analytics → visualization.
+* Practice real data analysis scenarios and optimise query costs.
 
 ### Tasks to be carried out this week:
-| Day | Task                                                                                                                                                                                                   | Start Date | Completion Date | Reference Material                        |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- | --------------- | ----------------------------------------- |
-| 2   | - Get acquainted with FCAJ members <br> - Read and take note of internship unit rules and regulations                                                                                                   | 08/11/2025 | 08/11/2025      |
-| 3   | - Learn about AWS and its types of services <br>&emsp; + Compute <br>&emsp; + Storage <br>&emsp; + Networking <br>&emsp; + Database <br>&emsp; + ... <br>                                              | 08/12/2025 | 08/12/2025      | <https://cloudjourney.awsstudygroup.com/> |
-| 4   | - Create AWS Free Tier account <br> - Learn about AWS Console & AWS CLI <br> - **Practice:** <br>&emsp; + Create AWS account <br>&emsp; + Install & configure AWS CLI <br> &emsp; + How to use AWS CLI | 08/13/2025 | 08/13/2025      | <https://cloudjourney.awsstudygroup.com/> |
-| 5   | - Learn basic EC2: <br>&emsp; + Instance types <br>&emsp; + AMI <br>&emsp; + EBS <br>&emsp; + ... <br> - SSH connection methods to EC2 <br> - Learn about Elastic IP   <br>                            | 08/14/2025 | 08/15/2025      | <https://cloudjourney.awsstudygroup.com/> |
-| 6   | - **Practice:** <br>&emsp; + Launch an EC2 instance <br>&emsp; + Connect via SSH <br>&emsp; + Attach an EBS volume                                                                                     | 08/15/2025 | 08/15/2025      | <https://cloudjourney.awsstudygroup.com/> |
+| Day | Task                                                                                                                                                                                                                                                                                                                                                                                                        | Start Date | Completion Date | Reference Material                        |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------- | ----------------------------------------- |
+| 2   | - Overview of Data Engineering on AWS: <br>&emsp; + Data Lake vs Data Warehouse vs Data Lakehouse <br>&emsp; + Batch vs Stream processing <br>&emsp; + Lambda vs Kappa architecture <br> - Learn AWS Glue: <br>&emsp; + Data Catalog <br>&emsp; + Crawler (auto schema) <br>&emsp; + ETL Job (PySpark) <br>&emsp; + Glue Studio (visual ETL) <br>&emsp; + Glue DataBrew (no-code data prep)                                          | 06/01/2026 | 06/01/2026      | <https://cloudjourney.awsstudygroup.com/> |
+| 3   | - Learn Amazon Athena: <br>&emsp; + Serverless query engine on S3 <br>&emsp; + Formats: Parquet, ORC, Avro, JSON, CSV <br>&emsp; + Partitioning & Compression <br>&emsp; + Federated Query (RDS, DynamoDB) <br>&emsp; + Query Result Location <br> - **Practice:** Build a Data Catalog for CSVs on S3 and write SQL for monthly revenue analysis and top 10 best-selling products                                                                                                                                                  | 06/02/2026 | 06/02/2026      | <https://cloudjourney.awsstudygroup.com/> |
+| 4   | - Learn Amazon Kinesis: <br>&emsp; + Kinesis Data Streams (low-level, custom consumer) <br>&emsp; + Kinesis Data Firehose (managed delivery → S3/Redshift/OpenSearch) <br>&emsp; + Kinesis Data Analytics (SQL tumbling window) <br> - Learn Amazon MSK (Managed Streaming for Apache Kafka): <br>&emsp; + Cluster, broker, topic <br>&emsp; + Multi-AZ replication <br> - **Practice:** Simulate IoT log stream → Firehose → S3 (Parquet) → Athena                                          | 06/03/2026 | 06/03/2026      | <https://cloudjourney.awsstudygroup.com/> |
+| 5   | - Learn Amazon QuickSight: <br>&emsp; + Dataset, Analysis, Dashboard <br>&emsp; + Sources: Athena, RDS, S3, Redshift <br>&emsp; + Calculated field, filter, parameter, KPI <br>&emsp; + ML Insights (anomaly detection, forecasting) <br>&emsp; + Embedded Analytics <br> - **Practice:** Build dashboards for revenue analysis by region, time, and product group; share with the team                                                                                                                | 06/04/2026 | 06/05/2026      | <https://cloudjourney.awsstudygroup.com/> |
+| 6   | - **Week 8 capstone lab:** <br>&emsp; + Pipeline: Kinesis Firehose → S3 (raw JSON) → Glue ETL (clean) → S3 (Parquet partition) → Athena → QuickSight <br>&emsp; + Sample data: real-time sales log <br>&emsp; + Wrap up & update worklog; write blog "Data Pipeline on AWS"                                                                                                                                                                          | 06/05/2026 | 06/05/2026      | <https://cloudjourney.awsstudygroup.com/> |
 
 
 ### Week 8 Achievements:
+* Mastered key Data Engineering concepts:
+  * Distinguished Data Lake (S3), Data Warehouse (Redshift), Data Lakehouse (S3 + Delta Lake)
+  * Understood batch processing (Glue, EMR) vs stream processing (Kinesis, MSK)
+  * Compared Lambda architecture (batch + speed layer) vs Kappa (stream only)
 
-* Understood what AWS is and mastered the basic service groups: 
-  * Compute
-  * Storage
-  * Networking 
-  * Database
-  * ...
+* Mastered AWS Glue:
+  * Used Crawler to auto-generate schema for data on S3
+  * Wrote ETL Jobs in PySpark to clean & normalise data (drop nulls, cast types, rename columns)
+  * Stored metadata in the Glue Data Catalog (queryable from Athena, Redshift Spectrum)
+  * Glue Studio for visual ETL design
+  * Glue DataBrew for code-free data preparation
 
-* Successfully created and configured an AWS Free Tier account.
+* Queried data with Athena:
+  * Ran SQL on Parquet/CSV files on S3 without ETL
+  * Partition (year/month/day) + Parquet format reduced cost by 70-90%
+  * Used CTAS to pre-create aggregated tables
+  * Athena Workgroups separating cost between teams
+  * Federated Query connecting directly to RDS PostgreSQL/MySQL
 
-* Became familiar with the AWS Management Console and learned how to find, access, and use services via the web interface.
+* Streamed data with Kinesis:
+  * **Kinesis Data Streams:** consumed real-time events with custom consumers (Lambda, KCL)
+  * **Kinesis Data Firehose:** buffered (60s or 128 MB) then delivered to S3/Redshift/OpenSearch
+  * **Kinesis Data Analytics:** ran SQL tumbling-window queries on streams
+  * Compared with MSK: choose Kinesis when fully-managed is needed; MSK when already on Kafka
 
-* Installed and configured AWS CLI on the computer, including:
-  * Access Key
-  * Secret Key
-  * Default Region
-  * ...
+* Visualised data with QuickSight:
+  * Datasets from Athena (relational datasets, SPICE in-memory datasets)
+  * Dashboard for revenue, top products, and churn rate
+  * Drag-and-drop for calculated fields, filters, and parameters
+  * ML Insights for anomaly detection and time-series forecasting
+  * Embedded Analytics for dashboards inside other web apps
 
-* Used AWS CLI to perform basic operations such as:
+* Completed a complete data pipeline:
+  * **Ingestion:** Kinesis Firehose collected real-time logs
+  * **Storage:** S3 stored raw JSON (partitioned by year/month/day)
+  * **Processing:** Glue ETL cleaned and converted to Parquet
+  * **Querying:** Athena ran serverless SQL
+  * **Visualization:** QuickSight dashboard shared with the team
 
-  * Check account & configuration information
-  * Retrieve the list of regions
-  * View EC2 service
-  * Create and manage key pairs
-  * Check information about running services
-  * ...
-
-* Acquired the ability to connect between the web interface and CLI to manage AWS resources in parallel.
+* Wrote a sharing blog on AWS data pipelines for the community.
+* New habits formed:
+  * Every S3 dataset is partitioned by date to optimise query cost
+  * Glue Jobs are scheduled (cron) via EventBridge
+  * Tag datasets with `DataClass = Confidential/Public` for access control
+  * Track Athena costs through Cost Explorer and set dedicated budgets
 * ...

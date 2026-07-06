@@ -1,59 +1,71 @@
----
+﻿---
 title: "Worklog Tuần 10"
-date: 2024-01-01
-weight: 2
+date: 2026-06-14
+weight: 10
 chapter: false
 pre: " <b> 1.10. </b> "
 ---
-{{% notice warning %}}
-⚠️ **Lưu ý:** Các thông tin dưới đây chỉ nhằm mục đích tham khảo, vui lòng **không sao chép nguyên văn** cho bài báo cáo của bạn kể cả warning này.
-{{% /notice %}}
-
-
 ### Mục tiêu tuần 10:
-
-* Kết nối, làm quen với các thành viên trong First Cloud AI Journey.
-* Hiểu dịch vụ AWS cơ bản, cách dùng console & CLI.
+* Củng cố kiến thức Security & Identity trong hệ sinh thái AWS.
+* Tìm hiểu chiến lược tối ưu chi phí vận hành (Cost Optimization) với AWS Budgets, Cost Explorer và Savings Plan.
+* Rà soát & bảo mật workshop cá nhân đang host trên AWS, viết checklist áp dụng được.
 
 ### Các công việc cần triển khai trong tuần này:
-| Thứ | Công việc                                                                                                                                                                                   | Ngày bắt đầu | Ngày hoàn thành | Nguồn tài liệu                            |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | --------------- | ----------------------------------------- |
-| 2   | - Làm quen với các thành viên FCAJ <br> - Đọc và lưu ý các nội quy, quy định tại đơn vị thực tập                                                                                             | 11/08/2025   | 11/08/2025      |
-| 3   | - Tìm hiểu AWS và các loại dịch vụ <br>&emsp; + Compute <br>&emsp; + Storage <br>&emsp; + Networking <br>&emsp; + Database <br>&emsp; + ... <br>                                            | 12/08/2025   | 12/08/2025      | <https://cloudjourney.awsstudygroup.com/> |
-| 4   | - Tạo AWS Free Tier account <br> - Tìm hiểu AWS Console & AWS CLI <br> - **Thực hành:** <br>&emsp; + Tạo AWS account <br>&emsp; + Cài AWS CLI & cấu hình <br> &emsp; + Cách sử dụng AWS CLI | 13/08/2025   | 13/08/2025      | <https://cloudjourney.awsstudygroup.com/> |
-| 5   | - Tìm hiểu EC2 cơ bản: <br>&emsp; + Instance types <br>&emsp; + AMI <br>&emsp; + EBS <br>&emsp; + ... <br> - Các cách remote SSH vào EC2 <br> - Tìm hiểu Elastic IP   <br>                  | 14/08/2025   | 15/08/2025      | <https://cloudjourney.awsstudygroup.com/> |
-| 6   | - **Thực hành:** <br>&emsp; + Tạo EC2 instance <br>&emsp; + Kết nối SSH <br>&emsp; + Gắn EBS volume                                                                                         | 15/08/2025   | 15/08/2025      | <https://cloudjourney.awsstudygroup.com/> |
+| Thứ | Công việc                                                                                                                                                                                                                                                                                                                                                                                                                            | Ngày bắt đầu | Ngày hoàn thành | Nguồn tài liệu                            |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ | --------------- | ----------------------------------------- |
+| 2   | - Ôn tập AWS Shared Responsibility Model <br> - Tìm hiểu AWS Organizations & AWS Control Tower: <br>&emsp; + Multi-account architecture (dev, staging, prod) <br>&emsp; + Service Control Policy (SCP) chặn region/dịch vụ <br>&emsp; + Organizational Units (OU) theo team/dự án <br>&emsp; + AWS RAM chia sẻ resource giữa account                                                                                                                                                                       | 15/06/2026   | 15/06/2026      | <https://cloudjourney.awsstudygroup.com/> |
+| 3   | - Tìm hiểu AWS IAM Identity Center (SSO): <br>&emsp; + Permission Sets <br>&emsp; + Account assignment <br>&emsp; + Tích hợp với Azure AD / Okta <br> - Tìm hiểu AWS Cognito: <br>&emsp; + User Pool (authentication) <br>&emsp; + Identity Pool (authorization) <br>&emsp; + JWT token & refresh token <br>&emsp; + Hosted UI <br> - **Thực hành:** Bảo vệ API Gateway bằng Cognito Authorizer; user pool cho web app React                                                                  | 16/06/2026   | 16/06/2026      | <https://cloudjourney.awsstudygroup.com/> |
+| 4   | - Tìm hiểu AWS KMS & Secrets Manager: <br>&emsp; + Customer Managed Key (CMK) <br>&emsp; + AWS Managed Key <br>&emsp; + Encryption at-rest & in-transit <br>&emsp; + Key Rotation <br>&emsp; + Secrets Manager rotate secret tự động (RDS password) <br>&emsp; + Cross-account access <br> - **Thực hành:** Mã hoá EBS, RDS, S3 bằng KMS, lưu DB password trong Secrets Manager và truy xuất trong Lambda                                                                                                                                                                       | 17/06/2026   | 17/06/2026      | <https://cloudjourney.awsstudygroup.com/> |
+| 5   | - Tìm hiểu AWS Cost Explorer & Budgets: <br>&emsp; + Cost & Usage Report (CUR) <br>&emsp; + Reserved Instance & Savings Plan <br>&emsp; + Cost anomaly detection <br>&emsp; + Tagging policy <br>&emsp; + Spot Instance cho workload linh hoạt <br> - **Thực hành:** Lập budget cảnh báo khi chi phí vượt ngưỡng ($20/tháng), phân tích cost theo service/tag qua Cost Explorer; bật anomaly detection                                                                                            | 18/06/2026   | 19/06/2026      | <https://cloudjourney.awsstudygroup.com/> |
+| 6   | - **Rà soát workshop cá nhân:** <br>&emsp; + Xoá tài nguyên thừa (EC2, EBS, Elastic IP không dùng) <br>&emsp; + Dùng tag theo dõi chi phí (Environment, Project) <br>&emsp; + Tắt EC2 ngoài giờ làm việc (Lambda + EventBridge) <br>&emsp; + Audit IAM access key cũ, xoá key không dùng <br>&emsp; + Bật CloudTrail ở region đang dùng <br> - Viết checklist bảo mật & cost trên workshop                                                                                                                                       | 19/06/2026   | 19/06/2026      | <https://cloudjourney.awsstudygroup.com/> |
 
 
 ### Kết quả đạt được tuần 10:
+* Nắm vững mô hình bảo mật AWS:
+  * Hiểu rõ AWS chịu trách nhiệm về "security OF the cloud" (hardware, hypervisor, region)
+  * Khách hàng chịu trách nhiệm về "security IN the cloud" (OS, app, data, IAM)
+  * Áp dụng vào các dịch vụ đang sử dụng
 
-* Hiểu AWS là gì và nắm được các nhóm dịch vụ cơ bản: 
-  * Compute
-  * Storage
-  * Networking 
-  * Database
-  * ...
+* Quản trị đa tài khoản với Organizations:
+  * Tạo nhiều account (dev / staging / prod) để cô lập môi trường
+  * Gán SCP chặn region không sử dụng (chỉ allow `ap-southeast-1`, `us-east-1`)
+  * Tổ chức OU theo team/dự án, dễ áp dụng policy đồng loạt
+  * AWS RAM chia sẻ VPC Subnet, Transit Gateway giữa các account
 
-* Đã tạo và cấu hình AWS Free Tier account thành công.
+* Cấu hình SSO & quản lý truy cập:
+  * IAM Identity Center hỗ trợ đăng nhập một lần nhiều account
+  * Permission Sets gán quyền theo role (Admin, Developer, Read-only)
+  * Cognito User Pool cung cấp authentication cho web/mobile app
+  * Cognito Identity Pool cấp AWS credential tạm thời cho user
+  * API Gateway + Cognito Authorizer bảo vệ REST API
 
-* Làm quen với AWS Management Console và biết cách tìm, truy cập, sử dụng dịch vụ từ giao diện web.
+* Bảo mật dữ liệu:
+  * Mã hoá EBS, RDS, S3 bằng KMS CMK
+  * S3 default encryption (SSE-S3 hoặc SSE-KMS)
+  * RDS encryption at-rest + in-transit (Force SSL)
+  * Secrets Manager xoay vòng password tự động (Lambda rotate function)
+  * Truy xuất secret qua Lambda mà không hardcode
+  * Xử lý key policy: chỉ service cần thiết được dùng key
 
-* Cài đặt và cấu hình AWS CLI trên máy tính bao gồm:
-  * Access Key
-  * Secret Key
-  * Region mặc định
-  * ...
+* Tối ưu chi phí:
+  * Phát hiện tài nguyên idle (EC2, EBS, Elastic IP) qua Cost Explorer
+  * Đặt Budget alarm khi vượt $20/tháng
+  * Bật Cost Anomaly Detection để nhận cảnh báo khi chi phí đột biến
+  * Phân tích cost theo service, tag, region
+  * Áp dụng Savings Plan cho workload ổn định (EC2, Lambda)
+  * Dùng Spot Instance cho workload linh hoạt (dev, batch)
 
-* Sử dụng AWS CLI để thực hiện các thao tác cơ bản như:
+* Các best practice đã áp dụng:
+  * Tắt EC2 không dùng bằng Lambda + EventBridge (schedule)
+  * Auto delete EBS volume khi EC2 bị xoá (`DeleteOnTermination: true`)
+  * Release Elastic IP không gắn vào instance
+  * Xoá access key > 90 ngày không dùng
+  * Bật MFA cho tất cả user có quyền quản trị
 
-  * Kiểm tra thông tin tài khoản & cấu hình
-  * Lấy danh sách region
-  * Xem dịch vụ EC2
-  * Tạo và quản lý key pair
-  * Kiểm tra thông tin dịch vụ đang chạy
-  * ...
-
-* Có khả năng kết nối giữa giao diện web và CLI để quản lý tài nguyên AWS song song.
+* Hoàn thành rà soát workshop cá nhân, viết checklist bảo mật & tối ưu chi phí lên GitHub.
+* Thói quen mới:
+  * Mỗi resource đều có tag chuẩn: Project, Environment, Owner, CostCenter
+  * Mỗi tuần dành 30 phút xem Cost Explorer để theo dõi chi phí
+  * Không bao giờ chia sẻ access key qua Slack/email, dùng role + OIDC
+  * Mỗi lần tạo S3 đều bật Block Public Access mặc định
 * ...
-
-

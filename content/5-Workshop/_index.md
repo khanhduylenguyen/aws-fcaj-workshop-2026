@@ -1,31 +1,69 @@
----
+﻿---
 title: "Workshop"
-date: 2024-01-01
+date: 2026-04-12
 weight: 5
 chapter: false
 pre: " <b> 5. </b> "
 ---
-{{% notice warning %}}
-⚠️ **Note:** The information below is for reference purposes only. Please **do not copy verbatim** for your report, including this warning.
-{{% /notice %}}
-
-# Secure Hybrid Access to S3 using VPC Endpoints
+# Build a Q&A Chatbot with Amazon Bedrock, Knowledge Base & RAG
 
 #### Overview
 
-**AWS PrivateLink** provides private connectivity to AWS services from VPCs and your on-premises networks, without exposing your traffic to the Public Internet.
+**Retrieval Augmented Generation (RAG)** is a technique that combines a large language model (LLM) with an external knowledge base (typically a vector database). When a user asks a question, the system:
+1. Retrieves the most relevant chunks from the knowledge base (based on semantic similarity).
+2. Injects them into the **context** of the prompt.
+3. Lets the LLM generate an answer grounded in the available context, reducing "hallucination".
 
-In this lab, you will learn how to create, configure, and test VPC endpoints that enable your workloads to reach AWS services without traversing the Public Internet.
+**Amazon Bedrock** is AWS's fully-managed generative AI service, providing many Foundation Models (Claude, Llama, Titan, Mistral, Cohere). In particular, **Bedrock Knowledge Base** automates the whole RAG pipeline (ingestion → chunking → embedding → retrieval) — you only upload your documents to S3 and Bedrock handles the rest.
 
-You will create two types of endpoints to access Amazon S3: a Gateway VPC endpoint, and an Interface VPC endpoint. These two types of VPC endpoints offer different benefits depending on if you are accessing Amazon S3 from the cloud or your on-premises location
-+ **Gateway** - Create a gateway endpoint to send traffic to Amazon S3 or DynamoDB using private IP addresses.You route traffic from your VPC to the gateway endpoint using route tables.
-+ **Interface** - Create an interface endpoint to send traffic to endpoint services that use a Network Load Balancer to distribute traffic. Traffic destined for the endpoint service is resolved using DNS.
+In this workshop you will build an internal Q&A chatbot capable of answering questions grounded in your company's documents (e.g. employee handbook, AWS technical docs, internal FAQ), while applying **Guardrails** to ensure safe and compliant outputs.
+
+#### Architecture Overview
+
+```mermaid
+flowchart LR
+  User[User<br>Web/Mobile]
+  subgraph AWS["AWS Cloud"]
+    CF[CloudFront + S3<br>React frontend]
+    APIGW[API Gateway]
+    Lambda[Lambda Function<br>chat handler]
+    Bedrock[Bedrock<br>Claude 3.5 Sonnet]
+    KB[Bedrock Knowledge Base]
+    OS[(OpenSearch<br>Serverless)]
+    S3Doc[S3 Bucket<br>documents]
+  end
+
+  User -->|HTTPS| CF
+  CF -->|API call| APIGW
+  APIGW --> Lambda
+  Lambda -->|InvokeModel| Bedrock
+  Bedrock -->|Retrieve| KB
+  KB -->|Vector search| OS
+  KB -->|Sync| S3Doc
+  Bedrock -->|Answer| Lambda
+  Lambda -->|JSON| CF
+  CF --> User
+```
+
+#### AWS services used in this workshop
+* **Amazon Bedrock** — Foundation Model (Claude 3.5 Sonnet) + Titan Embeddings v2
+* **Bedrock Knowledge Base** — automated RAG pipeline
+* **Amazon OpenSearch Serverless** — vector database
+* **Amazon S3** — source document storage
+* **AWS Lambda** — backend chat handler
+* **Amazon API Gateway** — REST endpoint for the frontend
+* **Amazon CloudFront + S3** — host the SPA frontend (React)
+* **Amazon Cognito** — user authentication (optional)
+* **Bedrock Guardrails** — filter harmful / PII outputs
+
+#### Workshop outcomes
+By the end of this workshop you will have a working RAG chatbot that can answer questions over a custom document set, with logging/auditing, Guardrails for Responsible AI, and full serverless deployment on AWS.
 
 #### Content
 
-1. [Workshop overview](5.1-Workshop-overview)
-2. [Prerequiste](5.2-Prerequiste/)
-3. [Access S3 from VPC](5.3-S3-vpc/)
-4. [Access S3 from On-premises](5.4-S3-onprem/)
-5. [VPC Endpoint Policies (Bonus)](5.5-Policy/)
-6. [Clean up](5.6-Cleanup/)
+1. [Workshop overview](5.1-Workshop-overview/)
+2. [Prerequisites](5.2-Prerequiste/)
+3. [Build the Knowledge Base with S3 + OpenSearch](5.3-Knowledge-Base/)
+4. [Build the Frontend & API (Lambda + API Gateway)](5.4-Frontend-API/)
+5. [Bedrock Guardrails (Responsible AI)](5.5-Guardrails/)
+6. [Clean up resources](5.6-Cleanup/)
