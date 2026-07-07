@@ -1,40 +1,287 @@
 ﻿---
-title : "Create an S3 Interface endpoint"
-date : 2024-01-01
+title : "Create Lambda function & API Gateway endpoint"
+date : 2026-04-12
 weight : 2
 chapter : false
 pre : " <b> 5.4.2 </b> "
 ---
 
-In this section you will create and test an S3 interface endpoint using the simulated on-premises environment deployed as part of this workshop.
+In this section you will:
 
-1. Return to the Amazon VPC menu. In the navigation pane, choose Endpoints, then click Create Endpoint.
+1. Write the **Lambda handler** (Python 3.12) that calls `RetrieveAndGenerate`.
+2. **Deploy the Lambda** with env vars pointing to the Knowledge Base.
+3. Create an **API Gateway REST API** exposing endpoint `POST /chat`.
 
-2. In Create endpoint console:
-+ Name the interface endpoint
-+ In Service category, choose **aws services** 
+#### 1. Write the Lambda handler
 
-![name](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint1.png)
+Create `lambda/lambda_function.py`:
 
-3.  In the Search box, type S3 and press Enter. Select the endpoint named com.amazonaws.us-east-1.s3. Ensure that the Type column indicates Interface.
+```python
+import json
+import os
+import logging
+import boto3
+from botocore.exceptions import ClientError
 
-![service](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint2.png)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
-4. For VPC, select VPC Cloud from the drop-down.
-+ Expand **Additional settings** and ensure that Enable DNS name is *not* selected (we will use this in the next part of the workshop)
+bedrock_agent_runtime = boto3.client(
+    "bedrock-agent-runtime",
+    region_name=os.environ.get("REGION", "ap-southeast-1"),
+)
 
-![vpc](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint3.png)
+KB_ID = os.environ["KB_ID"]
+MODEL_ARN = os.environ["MODEL_ARN"]
 
-5. Select 2 subnets in the following AZs: us-east-1a and us-east-1b
 
-![subnets](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint4.png)
+def lambda_handler(event, context):
+    try:
+        # Parse body (API Gateway wraps the request in `body`)
+        if isinstance(event.get("body"), str):
+            body = json.loads(event["body"])
+        else:
+            body = event
 
-6. For Security group, choose SGforS3Endpoint:
+        question = (body.get("question") or "").strip()
+        if not question:
+            return _resp(400, {"error": "Missing 'question' field"})
 
-![sg](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint5.png)
+        # Call Bedrock KB RetrieveAndGenerate
+        response = bedrock_agent_runtime.retrieve_and_generate(
+            input={"text": question},
+            retrieveAndGenerateConfiguration={
+                "type": "KNOWLEDGE_BASE",
+                "knowledgeBaseConfiguration": {
+                    "knowledgeBaseId": KB_ID,
+                    "modelArn": MODEL_ARN,
+                    "generationConfiguration": {
+                        "inferenceConfig": {
+                            "textInferenceConfig": {
+                                "maxTokens": 1024,
+                                "temperature": 0.3,
+                                "topP": 0.9,
+                            }
+                        }
+                    },
+                },
+            },
+        )
 
-7. Keep the default policy - full access and click Create endpoint
+        answer = response["output"]["text"]
 
-![success](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint-success.png)
+        # Extract citations (up to 5 unique sources)
+        citations = []
+        for cite in response.get("citations", []):
+            for ref in cite.get("retrievedReferences", []):
+                loc = ref.get("location", {}).get("s3Location", {})
+                citations.append({
+                    "uri":   loc.get("uri", ""),
+                    "title": ref.get("metadata", {}).get("x-amz-bedrock-kb-source-uri", ""),
+                })
 
-Congratulation on successfully creating S3 interface endpoint. In the next step, we will test the interface endpoint.
+        # dedup
+        seen, uniq = set(), []
+        for c in citations:
+            if c["uri"] and c["uri"] not in seen:
+                seen.add(c["uri"])
+                uniq.append(c)
+
+        logger.info(f"Question: {question} | Citations: {len(uniq)}")
+
+        return _resp(200, {
+            "answer":    answer,
+            "citations": uniq[:5],
+        })
+
+    except ClientError as e:
+        logger.error(f"Bedrock error: {e}")
+        return _resp(500, {"error": str(e)})
+    except Exception as e:
+        logger.exception("Unhandled error")
+        return _resp(500, {"error": str(e)})
+
+
+def _resp(code, body):
+    return {
+        "statusCode": code,
+        "headers": {
+            "Content-Type":                 "application/json",
+            "Access-Control-Allow-Origin":  "*",
+            "Access-Control-Allow-Headers": "Content-Type",
+            "Access-Control-Allow-Methods": "OPTIONS,POST",
+        },
+        "body": json.dumps(body, ensure_ascii=False),
+    }
+```
+
+#### 2. Package & deploy the Lambda
+
+```bash
+cd ~/fcaj-chat-app/lambda
+
+# Package the code into a .zip
+zip -r ../chat-handler.zip lambda_function.py
+
+# Get the role ARN created in 5.4.1
+ROLE_ARN=$(aws iam get-role \
+  --role-name fcaj-chat-handler-role \
+  --query 'Role.Arn' --output text)
+
+# Create the Lambda function
+aws lambda create-function \
+  --function-name fcaj-chat-handler \
+  --runtime python3.12 \
+  --role "$ROLE_ARN" \
+  --handler lambda_function.lambda_handler \
+  --zip-file fileb://../chat-handler.zip \
+  --timeout 30 \
+  --memory-size 256 \
+  --region ap-southeast-1
+```
+
+Configure **environment variables** pointing at the Knowledge Base:
+
+```bash
+KB_ID=$(aws bedrock-agent list-knowledge-bases \
+  --query "knowledgeBaseSummaries[?name=='fcaj-workshop-kb'].knowledgeBaseId" \
+  --output text --region ap-southeast-1)
+
+aws lambda update-function-configuration \
+  --function-name fcaj-chat-handler \
+  --environment "Variables={KB_ID=${KB_ID},MODEL_ARN=arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0,REGION=ap-southeast-1}" \
+  --region ap-southeast-1
+```
+
+Verify the Lambda was created:
+
+```bash
+aws lambda get-function \
+  --function-name fcaj-chat-handler \
+  --region ap-southeast-1 \
+  --query 'Configuration.[FunctionName, Runtime, State]'
+# Expected: ["fcaj-chat-handler", "python3.12", "Active"]
+```
+
+![lambda created](/images/5-Workshop/5.4-Frontend-API/lambda-created.png)
+
+#### 3. Create the API Gateway REST API
+
+```bash
+# Create REST API
+API_ID=$(aws apigateway create-rest-api \
+  --name "fcaj-chat-api" \
+  --endpoint-configuration types=REGIONAL \
+  --query 'id' --output text --region ap-southeast-1)
+
+echo "API_ID = $API_ID"
+
+# Get root resource id
+ROOT_ID=$(aws apigateway get-resources \
+  --rest-api-id $API_ID \
+  --query 'items[0].id' --output text --region ap-southeast-1)
+
+# Create /chat resource
+RES_ID=$(aws apigateway create-resource \
+  --rest-api-id $API_ID \
+  --parent-id $ROOT_ID \
+  --path-part chat \
+  --query 'id' --output text --region ap-southeast-1)
+
+echo "RES_ID = $RES_ID"
+
+# Lambda ARN
+LAMBDA_ARN=$(aws lambda get-function \
+  --function-name fcaj-chat-handler \
+  --region ap-southeast-1 \
+  --query 'Configuration.FunctionArn')
+
+# Create POST method, integrate with Lambda
+aws apigateway put-method \
+  --rest-api-id $API_ID \
+  --resource-id $RES_ID \
+  --http-method POST \
+  --authorization-type NONE \
+  --region ap-southeast-1
+
+aws apigateway put-integration \
+  --rest-api-id $API_ID \
+  --resource-id $RES_ID \
+  --http-method POST \
+  --type AWS_PROXY \
+  --integration-http-method POST \
+  --uri "arn:aws:apigateway:ap-southeast-1:lambda:path/2015-03-31/functions/${LAMBDA_ARN}/invocations" \
+  --region ap-southeast-1
+
+# Add OPTIONS method to handle CORS preflight
+aws apigateway put-method \
+  --rest-api-id $API_ID \
+  --resource-id $RES_ID \
+  --http-method OPTIONS \
+  --authorization-type NONE \
+  --region ap-southeast-1
+
+aws apigateway put-integration \
+  --rest-api-id $API_ID \
+  --resource-id $RES_ID \
+  --http-method OPTIONS \
+  --type MOCK \
+  --request-templates '{"application/json":"{\"statusCode\":200}"}' \
+  --region ap-southeast-1
+
+aws apigateway put-method-response \
+  --rest-api-id $API_ID \
+  --resource-id $RES_ID \
+  --http-method OPTIONS \
+  --status-code 200 \
+  --response-parameters "method.response.header.Access-Control-Allow-Headers=false,method.response.header.Access-Control-Allow-Methods=false,method.response.header.Access-Control-Allow-Origin=false" \
+  --region ap-southeast-1
+
+aws apigateway put-integration-response \
+  --rest-api-id $API_ID \
+  --resource-id $RES_ID \
+  --http-method OPTIONS \
+  --status-code 200 \
+  --response-parameters "method.response.header.Access-Control-Allow-Headers=\"'Content-Type'\",method.response.header.Access-Control-Allow-Methods=\"'OPTIONS,POST'\",method.response.header.Access-Control-Allow-Origin=\"'*'\"" \
+  --region ap-southeast-1
+
+# Allow API Gateway to invoke the Lambda
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+aws lambda add-permission \
+  --function-name fcaj-chat-handler \
+  --statement-id apigateway-chat-invoke \
+  --action lambda:InvokeFunction \
+  --principal apigateway.amazonaws.com \
+  --source-arn "arn:aws:execute-api:ap-southeast-1:${ACCOUNT_ID}:${API_ID}/*/POST/chat" \
+  --region ap-southeast-1
+
+# Deploy the API
+aws apigateway create-deployment \
+  --rest-api-id $API_ID \
+  --stage-name prod \
+  --region ap-southeast-1
+```
+
+After deployment, copy the **Invoke URL**:
+
+```bash
+echo "https://${API_ID}.execute-api.ap-southeast-1.amazonaws.com/prod/chat"
+```
+
+Save this URL — it will be used in 5.4.4 (Frontend) and 5.4.3 (Testing).
+
+![api deployed](/images/5-Workshop/5.4-Frontend-API/api-deployed.png)
+
+#### Summary
+
+After this section you have:
+* Lambda function `fcaj-chat-handler` calling the Bedrock Knowledge Base.
+* REST API endpoint `POST https://<api-id>.execute-api.ap-southeast-1.amazonaws.com/prod/chat`.
+
+In the next section (5.4.3) you will **test this endpoint** with `curl` or Postman.
+
+#### References
+* [Bedrock RetrieveAndGenerate API](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent-runtime_RetrieveAndGenerate.html)
+* [Lambda deployment package (Python)](https://docs.aws.amazon.com/lambda/latest/dg/python-package.html)
+* [API Gateway + Lambda proxy integration](https://docs.aws.amazon.com/apigateway/latest/developerguide/getting-started-with-lambda-integration.html)
+* [Enable CORS on API Gateway](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-cors.html)

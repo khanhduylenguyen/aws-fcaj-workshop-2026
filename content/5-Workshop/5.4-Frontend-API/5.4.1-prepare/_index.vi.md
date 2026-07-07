@@ -1,58 +1,142 @@
 ---
-title : "Chuẩn bị tài nguyên"
-date : 2024-01-01
+title : "Chuẩn bị IAM Role & môi trường"
+date : 2026-04-12
 weight : 1
 chapter : false
 pre : " <b> 5.4.1 </b> "
 ---
 
-Để chuẩn bị cho phần này của workshop, bạn sẽ cần phải:
-+ Triển khai CloudFormation stack
-+ Sửa đổi bảng định tuyến VPC.
+Trong phần này bạn sẽ chuẩn bị:
 
-Các thành phần này hoạt động cùng nhau để mô phỏng DNS forwarding và name resolution.
+* **IAM Role** cho Lambda được phép gọi Bedrock Knowledge Base.
+* **Cấu trúc thư mục** mã nguồn để viết Lambda + Frontend.
+* **Lấy các ID cần thiết** (Knowledge Base ID, Model ARN) từ phần 5.3.
 
-#### Triển khai CloudFormation stack
+#### 1. Tạo IAM Role cho Lambda
 
-Mẫu CloudFormation sẽ tạo các dịch vụ bổ sung để hỗ trợ mô phỏng môi trường truyền thống:
-+ Một Route 53 Private Hosted Zone lưu trữ các bản ghi Bí danh (Alias records) cho điểm cuối PrivateLink S3
-+ Một Route 53 Inbound Resolver endpoint cho phép "VPC Cloud" giải quyết các yêu cầu resolve DNS gửi đến Private Hosted Zone
-+ Một Route 53 Outbound Resolver endpoint cho phép "VPC On-prem" chuyển tiếp các yêu cầu DNS cho S3 sang "VPC Cloud"
+Lambda cần một **execution role** để có quyền gọi Bedrock Agent Runtime API.
 
-![route 53 diagram](/images/5-Workshop/5.4-S3-onprem/route53.png)
+Tạo trust policy cho phép Lambda assume role:
 
-1. Click link sau để mở [AWS CloudFormation console](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https://s3.amazonaws.com/reinvent-endpoints-builders-session/R53CF.yaml&stackName=PLOnpremSetup). Mẫu yêu cầu sẽ được tải sẵn vào menu. Chấp nhận tất cả mặc định và nhấp vào Tạo stack.
+```bash
+cat > trust-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": { "Service": "lambda.amazonaws.com" },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
 
-![Create stack](/images/5-Workshop/5.4-S3-onprem/create-stack.png)
+aws iam create-role \
+  --role-name fcaj-chat-handler-role \
+  --assume-role-policy-document file://trust-policy.json \
+  --region ap-southeast-1
+```
 
-![Button](/images/5-Workshop/5.4-S3-onprem/create-stack-button.png)
+Tạo permission policy cho phép gọi Bedrock + ghi CloudWatch Logs:
 
-Có thể mất vài phút để triển khai stack hoàn tất. Bạn có thể tiếp tục với bước tiếp theo mà không cần đợi quá trình triển khai kết thúc.
+```bash
+cat > bedrock-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "BedrockRetrieveAndGenerate",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:RetrieveAndGenerate",
+        "bedrock:Retrieve",
+        "bedrock:InvokeModel"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:ap-southeast-1:*:log-group:/aws/lambda/fcaj-chat-handler:*"
+    }
+  ]
+}
+EOF
 
-####  Cập nhật bảng định tuyến private on-premise 
+aws iam create-policy \
+  --policy-name fcaj-chat-handler-policy \
+  --policy-document file://bedrock-policy.json \
+  --region ap-southeast-1
 
-Workshop này sử dụng StrongSwan VPN chạy trên EC2 instance để mô phỏng khả năng kết nối giữa trung tâm dữ liệu truyền thống và môi trường cloud AWS. Hầu hết các thành phần bắt buộc đều được cung cấp trước khi bạn bắt đầu. Để hoàn tất cấu hình VPN, bạn sẽ sửa đổi bảng định tuyến "VPC on-prem" để hướng lưu lượng đến cloud đi qua StrongSwan VPN instance.
+aws iam attach-role-policy \
+  --role-name fcaj-chat-handler-role \
+  --policy-arn arn:aws:iam::<account-id>:policy/fcaj-chat-handler-policy
+```
 
-1. Mở Amazon EC2 console 
+> 💡 Thay `<account-id>` bằng AWS Account ID của bạn (lấy bằng `aws sts get-caller-identity`).
 
-2. Chọn instance tên infra-vpngw-test. Từ Details tab, copy Instance ID và paste vào text editor của bạn để sử dụng ở những bước tiếp theo
+#### 2. Lấy Knowledge Base ID và Model ARN
 
-![ec2 id](/images/5-Workshop/5.4-S3-onprem/ec2-onprem-id.png)
+```bash
+# Lấy KB_ID từ phần 5.3
+KB_ID=$(aws bedrock-agent list-knowledge-bases \
+  --query "knowledgeBaseSummaries[?name=='fcaj-workshop-kb'].knowledgeBaseId" \
+  --output text --region ap-southeast-1)
 
-3. Đi đến VPC menu bằng cách gõ "VPC" vào Search box
+echo "KB_ID = $KB_ID"
 
-4. Click vào Route Tables, chọn RT Private On-prem route table, chọn Routes tab, và click Edit Routes.
+# Model ARN cố định cho Claude 3.5 Sonnet ở Singapore
+export MODEL_ARN="arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0"
+export REGION="ap-southeast-1"
+```
 
-![rt](/images/5-Workshop/5.4-S3-onprem/rt.png)
+Lưu 3 giá trị này để dùng cho bước tiếp theo (5.4.2 — tạo Lambda).
 
-5. Click Add route.
-+ Destination: CIDR block của Cloud VPC
-+ Target: ID của infra-vpngw-test instance (bạn đã lưu lại ở bước trên)
+#### 3. Chuẩn bị thư mục source code
 
-![add route](/images/5-Workshop/5.4-S3-onprem/add-route.png)
+```bash
+mkdir -p ~/fcaj-chat-app
+cd ~/fcaj-chat-app
 
-6. Click Save changes
+# Thư mục con
+mkdir -p lambda       # Lambda function code
+mkdir -p frontend     # React SPA
+```
 
+#### 4. Kiểm tra môi trường
 
+Chạy 3 lệnh kiểm tra, cả 3 phải trả kết quả thành công:
 
+```bash
+# (a) IAM role đã tạo
+aws iam get-role --role-name fcaj-chat-handler-role \
+  --query 'Role.RoleName' --output text
+# Kỳ vọng: fcaj-chat-handler-role
 
+# (b) Bedrock model access
+aws bedrock list-foundation-models --region ap-southeast-1 \
+  --query 'modelSummaries[?contains(modelId, `claude-3-5`)].modelId'
+# Kỳ vọng: có ít nhất 1 model Claude 3.5 Sonnet
+
+# (c) Knowledge Base đã sẵn sàng
+aws bedrock-agent get-knowledge-base \
+  --knowledge-base-id $KB_ID \
+  --region ap-southeast-1 \
+  --query 'knowledgeBase.status'
+# Kỳ vọng: "ACTIVE"
+```
+
+![prepare complete](/images/5-Workshop/5.4-Frontend-API/prepare.png)
+
+Nếu cả 3 lệnh đều OK, bạn sẵn sàng cho [phần 5.4.2 — Tạo Lambda function & API Gateway endpoint](../5.4.2-create-interface-enpoint/).
+
+#### Tài liệu tham khảo
+* [Lambda execution role](https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html)
+* [Bedrock Agent Runtime permissions](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-lambda.html)
+* [ListKnowledgeBases API](https://docs.aws.amazon.com/bedrock-agent/latest/APIReference/API_ListKnowledgeBases.html)

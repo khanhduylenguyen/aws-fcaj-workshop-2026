@@ -1,118 +1,385 @@
 ---
-title : "Mô phỏng On-premises DNS "
-date : 2024-01-01
+title : "Build & Deploy React frontend"
+date : 2026-04-12
 weight : 4
 chapter : false
 pre : " <b> 5.4.4 </b> "
 ---
 
- AWS PrivateLink endpoint có một địa chỉ IP cố định trong từng AZ nơi chúng được triển khai, trong suốt thời gian tồn tại của endpoint (cho đến khi endpoint bị xóa). Các địa chỉ IP này được gắn vào Elastic network interface (ENI). AWS khuyến nghị sử dụng DNS để resolve địa chỉ IP cho endpoint để các ứng dụng downstream sử dụng địa chỉ IP mới nhất khi ENIs được thêm vào AZ mới hoặc bị xóa theo thời gian.
+Trong phần này bạn sẽ xây dựng **React SPA** đơn giản cho chatbot, build production rồi deploy lên **S3 + CloudFront**.
 
-Trong phần này, bạn sẽ tạo một quy tắc chuyển tiếp (forwarding rule) để gửi các yêu cầu resolve DNS từ môi trường truyền thống (mô phỏng) đến Private Hosted Zone trên Route 53. Phần này tận dụng cơ sở hạ tầng do CloudFormation triển khai trong phần Chuẩn bị môi trường.
+#### 1. Khởi tạo React project với Vite
 
-#### Tạo DNS Alias Records cho Interface endpoint
-1. Click link để đi đến [Route 53 management console](https://us-east-1.console.aws.amazon.com/route53/v2/hostedzones?region=us-east-1#) (Hosted Zones section).  Mẫu CloudFormation mà bạn triển khai trong phần Chuẩn bị môi trường đã tạo Private Hosted Zone này. Nhấp vào tên của Private Hosted Zone, s3.us-east-1.amazonaws.com:
+```bash
+cd ~/fcaj-chat-app
 
-![hosted zone](/images/5-Workshop/5.4-S3-onprem/hosted-zone.png)
-
-2. Tạo 1 record mới trong Private Hosted Zone:
-
-![Create record](/images/5-Workshop/5.4-S3-onprem/create-record1.png)
-
-+ Giữ nguyên Record name và record type
-+ Alias Button: click để enable
-+ Route traffic to: Alias to VPC Endpoint
-+ Region: US East (N. Virginia) [us-east-1]
-+ Chọn endpoint: Paste tên (Regional VPC Endpoint DNS) bạn đã lưu lại ở phần 4.3
-
-![record1](/images/5-Workshop/5.4-S3-onprem/record1.png)
-
-3. Click Add another record, và add 1 cái record thứ 2 sử dụng những thông số sau:
-+ Record name: *.
-+ Record type: giữ giá trị default (type A)
-+ Alias Button: Click để enable
-+ Route traffic to: Alias to VPC Endpoint
-+ Region: US East (N. Virginia) [us-east-1]
-+ Chọn endpoint: Paste tên (Regional VPC Endpoint DNS) bạn đã lưu lại ở phần 4.3
-+ Click **Create records** 
-
-![record 2](/images/5-Workshop/5.4-S3-onprem/record2.png)
-
-Record mới xuất hiện trên giao diện Route 53.
-
-![result](/images/5-Workshop/5.4-S3-onprem/result.png)
-
-#### Tạo một Resolver Forwarding Rule
-
-**Route 53 Resolver Forwarding Rules** cho phép bạn chuyển tiếp các DNS queries từ VPC của bạn đến các nguồn khác để resolve name. Bên ngoài môi trường workshop, bạn có thể sử dụng tính năng này để chuyển tiếp các DNS queries từ VPC của bạn đến các máy chủ DNS chạy trên on-premises. Trong phần này, bạn sẽ mô phỏng một on-premises conditional forwarder bằng cách tạo một forwarding rule để chuyển tiếp các DNS queries for Amazon S3 đến một Private Hosted Zone chạy trong "VPC Cloud" để resolve PrivateLink interface endpoint regional DNS name.
-
-1. Từ giao diện  **Route 53**, chọn **Inbound endpoints** trên thanh bên trái
-
-2. Trong giao diện **Inbound endpoint**, Chọn ID của Inbound endpoint.
-
-![Inbound endpoint](/images/5-Workshop/5.4-S3-onprem/route53-1.png)
-
-3. Sao chép 2 địa chỉ IP trong danh sách vào trình chỉnh sửa.
-
-![Ip addresses](/images/5-Workshop/5.4-S3-onprem/route53-2.png)
-
-4. Từ giao diện Route 53, chọn  **Resolver** > **Rules** và chọn **Create rule**
-
-![Ip addresses](/images/5-Workshop/5.4-S3-onprem/route53-3.png)
-
-5. Trong giao diện **Create rule**
-
-+ Name: myS3Rule
-+ Rule type: Forward
-+ Domain name: s3.us-east-1.amazonaws.com
-
-![create rule](/images/5-Workshop/5.4-S3-onprem/route53-4.png)
-
-+ VPC: VPC On-prem
-+ Outbound endpoint: VPCOnpremOutboundEndpoint
-
-![create rule](/images/5-Workshop/5.4-S3-onprem/route53-5.png)
-
-+ Target IP Addresses: điền cả hai IP bạn đã lưu trữ trên trình soạn thảo (inbound endpoint addresses) và sau đó chọn **Submit**
-
-![create rule](/images/5-Workshop/5.4-S3-onprem/route53-6.png)
-
-Bạn đã tạo thành công resolver forwarding rule. 
-
-![create rule](/images/5-Workshop/5.4-S3-onprem/route53-7.png)
-
-#### Kiểm tra on-premises DNS mô phỏng.
-
-1. Kết nối đến **Test-Interface-Endpoint EC2 instance** với **Session Manager**
-
-![create rule](/images/5-Workshop/5.4-S3-onprem/test1.png)
-
-2. Kiểm tra DNS resolution. Lệnh dig sẽ trả về địa chỉ IP được gán cho VPC endpoint interface đang chạy trên VPC (địa chỉ IP của bạn sẽ khác):
-
-```
-dig +short s3.us-east-1.amazonaws.com 
-```
-{{% notice note %}}
-Các địa chỉ IP được trả về là các địa chỉ IP VPC enpoint, KHÔNG phải là các địa chỉ IP Resolver mà bạn đã dán từ trình chỉnh sửa văn bản của mình. Các địa chỉ IP của  Resolver endpoint  và  VPC endpoin trông giống nhau vì chúng đều từ khối CIDR VPC Cloud.
-{{% /notice %}}
-
-![create rule](/images/5-Workshop/5.4-S3-onprem/dig.png)
-
-3. Truy cập vào menu VPC (phần Endpoints), chọn S3 interface endpoint. Nhấp vào tab Subnets và xác nhận rằng các địa chỉ IP được trả về bởi lệnh Dig khớp với VPC endpoint:
-
-![create rule](/images/5-Workshop/5.4-S3-onprem/subnet.png)
-
-4. Hãy quay lại shell của bạn và sử dụng AWS CLI để kiểm tra danh sách các bucket S3 của bạn:
-
-```
-aws s3 ls --endpoint-url https://s3.us-east-1.amazonaws.com
+npm create vite@latest frontend -- --template react
+cd frontend
+npm install
 ```
 
-![create rule](/images/5-Workshop/5.4-S3-onprem/endpoint.png)
+#### 2. Cấu hình biến môi trường
 
-5. Kết thúc phiên làm việc của Session Manager của bạn:
+Tạo file `.env.production` chứa API URL của bạn (lấy ở 5.4.2):
 
-![create rule](/images/5-Workshop/5.4-S3-onprem/terminal.png)
+```bash
+cat > .env.production << 'EOF'
+VITE_API_URL=https://<API_ID>.execute-api.ap-southeast-1.amazonaws.com/prod
+EOF
 
+cat > .env.development << 'EOF'
+VITE_API_URL=http://localhost:8000
+EOF
+```
 
-Trong phần này, bạn đã tạo một  **Interface Endpoint**  cho Amazon S3. Điểm cuối này có thể được truy cập từ on-premises thông qua Site-to-Site VPN hoặc AWS Direct Connect. Các điểm cuối Route 53 Resolver outbound giả lập chuyển tiếp các yêu cầu DNS từ on-premises đến một Private Hosted Zone đang chạy trên đám mây. Các điểm cuối Route 53 inbound nhận yêu cầu giải quyết và trả về một phản hồi chứa địa chỉ IP của  **Interface Endpoint**  VPC. Sử dụng DNS để giải quyết các địa chỉ IP của điểm cuối cung cấp tính sẵn sàng cao trong trường hợp một Availability Zone gặp sự cố.
+> 💡 Thay `<API_ID>` bằng API Gateway ID thật.
+
+#### 3. Sửa `src/App.jsx`
+
+```jsx
+import { useState } from "react";
+import "./App.css";
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+function App() {
+  const [messages, setMessages] = useState([
+    {
+      role: "assistant",
+      content:
+        "Xin chào! Mình là chatbot FCAJ Workshop. Hỏi mình bất kỳ điều gì về tài liệu AWS nhé.",
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const send = async () => {
+    if (!input.trim() || loading) return;
+    const userMsg = { role: "user", content: input };
+    setMessages((m) => [...m, userMsg]);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${API_URL}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: userMsg.content }),
+      });
+      const data = await res.json();
+
+      setMessages((m) => [
+        ...m,
+        {
+          role: "assistant",
+          content: data.answer || data.error || "Lỗi không xác định",
+          citations: data.citations || [],
+        },
+      ]);
+    } catch (e) {
+      setMessages((m) => [
+        ...m,
+        { role: "assistant", content: "Lỗi: " + e.message },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="chat-app">
+      <header>
+        <h1>🧠 FCAJ Workshop Chat</h1>
+        <small>Powered by Amazon Bedrock + RAG</small>
+      </header>
+
+      <div className="messages">
+        {messages.map((m, i) => (
+          <div key={i} className={`message ${m.role}`}>
+            <strong>{m.role === "user" ? "Bạn" : "AI"}:</strong> {m.content}
+            {m.citations && m.citations.length > 0 && (
+              <details>
+                <summary>📚 {m.citations.length} nguồn tham khảo</summary>
+                <ul>
+                  {m.citations.map((c, j) => (
+                    <li key={j}>
+                      <a href={c.uri} target="_blank" rel="noreferrer">
+                        {c.title || c.uri}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </div>
+        ))}
+        {loading && <div className="message assistant loading">...</div>}
+      </div>
+
+      <div className="input-row">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && send()}
+          placeholder="Hỏi bất kỳ điều gì về tài liệu AWS..."
+          disabled={loading}
+        />
+        <button onClick={send} disabled={loading}>
+          {loading ? "..." : "Gửi"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+```
+
+#### 4. Thay file `src/App.css`
+
+```css
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; }
+
+.chat-app {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header { text-align: center; margin-bottom: 1rem; }
+header h1 { margin: 0; color: #1e293b; }
+header small { color: #64748b; }
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  flex: 1;
+  overflow-y: auto;
+  max-height: 65vh;
+}
+
+.message {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  max-width: 80%;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.message.user {
+  background: #2563eb;
+  color: white;
+  align-self: flex-end;
+}
+
+.message.assistant {
+  background: #f1f5f9;
+  color: #1e293b;
+  align-self: flex-start;
+}
+
+.message.loading {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+details {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+details ul {
+  margin: 0.25rem 0 0 1rem;
+  padding: 0;
+}
+
+.input-row {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 0;
+}
+
+.input-row input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.input-row input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.input-row button {
+  padding: 0.75rem 1.5rem;
+  background: #2563eb;
+  color: white;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.input-row button:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+```
+
+#### 5. Build production
+
+```bash
+npm run build
+# Output: dist/ chứa index.html + assets/
+```
+
+#### 6. Tạo S3 bucket cho frontend
+
+```bash
+BUCKET="fcaj-chat-ui-$(date +%s)"  # tên bucket unique
+echo "Bucket name: $BUCKET"
+
+aws s3 mb s3://$BUCKET --region ap-southeast-1
+
+# Disable Block Public Access để serve static website
+aws s3api delete-public-access-block --bucket $BUCKET --region ap-southeast-1
+
+# Bucket policy cho phép public read
+cat > bucket-policy.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadGetObject",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::${BUCKET}/*"
+    }
+  ]
+}
+EOF
+
+aws s3api put-bucket-policy --bucket $BUCKET --policy file://bucket-policy.json
+
+# Enable static website hosting
+aws s3 website s3://$BUCKET \
+  --index-document index.html \
+  --error-document index.html
+
+echo "Website URL: http://${BUCKET}.s3-website-ap-southeast-1.amazonaws.com"
+```
+
+#### 7. Upload build lên S3
+
+```bash
+aws s3 sync dist/ s3://$BUCKET/ --delete --region ap-southeast-1
+```
+
+Mở trình duyệt: **http://`<bucket>`.s3-website-ap-southeast-1.amazonaws.com**
+
+Thử hỏi: *"S3 có những storage class nào?"* → Frontend gọi API → Bedrock retrieve từ KB → Claude trả lời + citation.
+
+![chat ui](/images/5-Workshop/5.4-Frontend-API/chat-ui.png)
+
+#### 8. (Tuỳ chọn) Đặt CloudFront phía trước S3
+
+CloudFront giúp HTTPS + cache + CDN tốc độ toàn cầu:
+
+```bash
+# Origin Access Identity để CloudFront đọc bucket private
+OAI=$(aws cloudfront create-cloud-front-origin-access-identity \
+  --cloud-front-origin-access-identity-config \
+  CallerReference=$(date +%s),Comment="OAI for $BUCKET" \
+  --query 'CloudFrontOriginAccessIdentity.Id' --output text)
+
+# Update bucket policy: chỉ cho OAI đọc
+cat > bucket-policy-cf.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": { "AWS": "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${OAI}" },
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::${BUCKET}/*"
+    }
+  ]
+}
+EOF
+aws s3api put-bucket-policy --bucket $BUCKET --policy file://bucket-policy-cf.json
+
+# Tạo CloudFront distribution
+cat > cf-config.json << EOF
+{
+  "CallerReference": "$(date +%s)",
+  "Comment": "FCAJ Chat UI CDN",
+  "DefaultRootObject": "index.html",
+  "Origins": {
+    "Quantity": 1,
+    "Items": [{
+      "Id": "S3-${BUCKET}",
+      "DomainName": "${BUCKET}.s3.ap-southeast-1.amazonaws.com",
+      "S3OriginConfig": {
+        "OriginAccessIdentity": "origin-access-identity/cloudfront/${OAI}"
+      }
+    }]
+  },
+  "DefaultCacheBehavior": {
+    "TargetOriginId": "S3-${BUCKET}",
+    "ViewerProtocolPolicy": "redirect-to-https",
+    "AllowedMethods": ["GET", "HEAD", "OPTIONS"],
+    "CachedMethods": ["GET", "HEAD"],
+    "ForwardedValues": {
+      "QueryString": false,
+      "Cookies": {"Forward": "none"}
+    },
+    "MinTTL": 0,
+    "DefaultTTL": 3600,
+    "MaxTTL": 86400
+  },
+  "Enabled": true
+}
+EOF
+
+aws cloudfront create-distribution \
+  --distribution-config file://cf-config.json \
+  --query 'Distribution.DomainName' --output text
+```
+
+CloudFront domain sẽ trả về dạng `d111111abcdef8.cloudfront.net` — mở trong trình duyệt để test.
+
+#### 9. Custom domain (nâng cao, tuỳ chọn)
+
+Nếu bạn có domain riêng (ví dụ `chat.fcaj-demo.com`):
+
+1. Tạo ACM certificate ở region **us-east-1** (CloudFront yêu cầu).
+2. Thêm `Aliases` + `ViewerCertificate` vào CloudFront distribution.
+3. Tạo Route 53 record `A → CloudFront distribution`.
+
+#### Tổng kết
+
+Sau phần này bạn có:
+* React SPA chạy production với Vite.
+* Frontend host trên S3 (HTTP) hoặc CloudFront (HTTPS + CDN).
+* Toàn bộ pipeline end-to-end:
+
+```
+User → React UI → API Gateway → Lambda → Bedrock KB → trả lời + citation
+```
+
+User có thể chat trực tiếp với Knowledge Base thông qua giao diện web đẹp mắt.
+
+#### Tài liệu tham khảo
+* [Vite — Getting Started](https://vitejs.dev/guide/)
+* [Hosting SPA on S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/HostingWebsiteOnS3Setup.html)
+* [CloudFront with S3 origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-values-specify.html)
+* [React useState hook](https://react.dev/reference/react/useState)

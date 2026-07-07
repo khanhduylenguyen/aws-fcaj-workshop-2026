@@ -1,111 +1,385 @@
 ---
-title : "On-premises DNS Simulation"
-date : 2024-01-01
+title : "Build & Deploy React frontend"
+date : 2026-04-12
 weight : 4
 chapter : false
 pre : " <b> 5.4.4 </b> "
 ---
 
-AWS PrivateLink endpoints have a fixed IP address in each Availability Zone where they are deployed, for the life of the endpoint (until it is deleted). These IP addresses are attached to Elastic Network Interfaces (ENIs). AWS recommends using DNS to resolve the IP addresses for endpoints so that downstream applications use the latest IP addresses when ENIs are added to new AZs, or deleted over time.
+In this section you will build a **React SPA** for the chatbot, run a production build, then deploy it to **S3 + CloudFront**.
 
-In this section, you will create a forwarding rule to send DNS resolution requests from a simulated on-premises environment to a Route 53 Private Hosted Zone. This section leverages the infrastructure deployed by CloudFormation in the Prepare the environment section.
+#### 1. Scaffold the React project with Vite
 
-#### Create DNS Alias Records for the Interface endpoint
-1. Navigate to the [Route 53 management console](https://us-east-1.console.aws.amazon.com/route53/v2/hostedzones?region=us-east-1#) (Hosted Zones section).  The CloudFormation template you deployed in the Prepare the environment section created this Private Hosted Zone. Click on the name of the Private Hosted Zone, s3.us-east-1.amazonaws.com:
+```bash
+cd ~/fcaj-chat-app
 
-![hosted zone](/images/5-Workshop/5.4-S3-onprem/hosted-zone.png)
-
-2. Create a new record in the Private Hosted Zone:
-
-![Create record](/images/5-Workshop/5.4-S3-onprem/create-record1.png)
-
-+ Record name and record type keep default options
-+ Alias Button: Click to enable
-+ Route traffic to: Alias to VPC Endpoint
-+ Region: US East (N. Virginia) [us-east-1]
-+ Choose endpoint: Paste the Regional VPC Endpoint DNS name from your text editor (you saved when doing section 4.3)
-
-![record1](/images/5-Workshop/5.4-S3-onprem/record1.png)
-
-3. Click Add another record, and add a second record using the following values. Click Create records when finished to create both records.
-+ Record name: *.
-+ Record type: keep default value (type A)
-+ Alias Button: Click to enable
-+ Route traffic to: Alias to VPC Endpoint
-+ Region: US East (N. Virginia) [us-east-1]
-+ Choose endpoint: Paste the Regional VPC Endpoint DNS name from your text editor
-
-![record 2](/images/5-Workshop/5.4-S3-onprem/record2.png)
-
-The new records appear in the Route 53 console:
-
-![result](/images/5-Workshop/5.4-S3-onprem/result.png)
-
-#### Create a Resolver Forwarding Rule
-
-Route 53 Resolver Forwarding Rules allow you to forward DNS queries from your VPC to other sources for name resolution. Outside of a workshop environment, you might use this feature to forward DNS queries from your VPC to DNS servers running on-premises. In this section, you will simulate an on-premises conditional forwarder by creating a forwarding rule that forwards DNS queries for Amazon S3 to a Private Hosted Zone running in "VPC Cloud" in-order to resolve the PrivateLink interface endpoint regional DNS name.
-
-1. From the Route 53 management console, click **Inbound endpoints** on the left side bar
-2. In the Inbound endpoints console, click the ID of the inbound endpoint
-
-![Inbound endpoint](/images/5-Workshop/5.4-S3-onprem/route53-1.png)
-
-3. Copy the two IP addresses listed to your text editor
-
-![Ip addresses](/images/5-Workshop/5.4-S3-onprem/route53-2.png)
-
-4. From the Route 53 menu, choose **Resolver** > **Rules**, and click **Create rule**:
-
-![Ip addresses](/images/5-Workshop/5.4-S3-onprem/route53-3.png)
-
-5. In the Create rule console:
-+ Name: myS3Rule
-+ Rule type: Forward
-+ Domain name: s3.us-east-1.amazonaws.com
-
-![create rule](/images/5-Workshop/5.4-S3-onprem/route53-4.png)
-
-+ VPC: VPC On-prem
-+ Outbound endpoint: VPCOnpremOutboundEndpoint
-
-![create rule](/images/5-Workshop/5.4-S3-onprem/route53-5.png)
-
-+ Target IP Addresses: Enter both IP addresses from your text editor (inbound endpoint addresses) and then click Submit
-
-![create rule](/images/5-Workshop/5.4-S3-onprem/route53-6.png)
-You have successfully created resolver forwarding rule. 
-
-![create rule](/images/5-Workshop/5.4-S3-onprem/route53-7.png)
-
-#### Test the on-premises DNS Simulation
-
-1. Connect to **Test-Interface-Endpoint EC2 instance** with **Session manager**
-
-![create rule](/images/5-Workshop/5.4-S3-onprem/test1.png)
-
-2. Test DNS resolution. The dig command will return the IP addresses assigned to the VPC Interface endpoint running in VPC Cloud (your IP's will be different): dig +short s3.us-east-1.amazonaws.com 
-
-{{% notice note %}}
-The IP addresses returned are the VPC endpoint IP addresses, NOT the Resolver IP addresses you pasted from your text editor. The IP addresses of the Resolver endpoint and the VPC endpoint look similar because they are all from the VPC Cloud CIDR block.
-{{% /notice %}}
-
-![create rule](/images/5-Workshop/5.4-S3-onprem/dig.png)
-
-
-3. Navigate to the VPC menu (Endpoints section), select the S3 Interface endpoint. Click the Subnets tab and verify that the IP addresses returned by Dig match the VPC endpoint:
-
-![create rule](/images/5-Workshop/5.4-S3-onprem/subnet.png)
-
-4. Return to your shell and use the AWS CLI to test listing your S3 buckets:
-
-```
-aws s3 ls --endpoint-url https://s3.us-east-1.amazonaws.com
+npm create vite@latest frontend -- --template react
+cd frontend
+npm install
 ```
 
-![create rule](/images/5-Workshop/5.4-S3-onprem/endpoint.png)
+#### 2. Configure environment variables
 
-5. Terminate your Session Manager session:
+Create `.env.production` with your API URL (from 5.4.2):
 
-![create rule](/images/5-Workshop/5.4-S3-onprem/terminal.png)
+```bash
+cat > .env.production << 'EOF'
+VITE_API_URL=https://<API_ID>.execute-api.ap-southeast-1.amazonaws.com/prod
+EOF
 
-In this section you created an Interface endpoint for Amazon S3. This endpoint can be reached from on-premises through Site-to-Site VPN or AWS Direct Connect. Route 53 Resolver outbound endpoints simulated forwarding DNS requests from on-premises to a Private Hosted Zone running the cloud. Route 53 inbound Endpoints recieved the resolution request and returned a response containing the IP addresses of the VPC interface endpoint. Using DNS to resolve the endpoint IP addresses provides high availability in-case of an Availability Zone outage.
+cat > .env.development << 'EOF'
+VITE_API_URL=http://localhost:8000
+EOF
+```
+
+> 💡 Replace `<API_ID>` with the real API Gateway ID.
+
+#### 3. Replace `src/App.jsx`
+
+```jsx
+import { useState } from "react";
+import "./App.css";
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+function App() {
+  const [messages, setMessages] = useState([
+    {
+      role: "assistant",
+      content:
+        "Hi! I'm the FCAJ Workshop chatbot. Ask me anything about the AWS documents.",
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const send = async () => {
+    if (!input.trim() || loading) return;
+    const userMsg = { role: "user", content: input };
+    setMessages((m) => [...m, userMsg]);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${API_URL}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: userMsg.content }),
+      });
+      const data = await res.json();
+
+      setMessages((m) => [
+        ...m,
+        {
+          role: "assistant",
+          content: data.answer || data.error || "Unknown error",
+          citations: data.citations || [],
+        },
+      ]);
+    } catch (e) {
+      setMessages((m) => [
+        ...m,
+        { role: "assistant", content: "Error: " + e.message },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="chat-app">
+      <header>
+        <h1>🧠 FCAJ Workshop Chat</h1>
+        <small>Powered by Amazon Bedrock + RAG</small>
+      </header>
+
+      <div className="messages">
+        {messages.map((m, i) => (
+          <div key={i} className={`message ${m.role}`}>
+            <strong>{m.role === "user" ? "You" : "AI"}:</strong> {m.content}
+            {m.citations && m.citations.length > 0 && (
+              <details>
+                <summary>📚 {m.citations.length} sources</summary>
+                <ul>
+                  {m.citations.map((c, j) => (
+                    <li key={j}>
+                      <a href={c.uri} target="_blank" rel="noreferrer">
+                        {c.title || c.uri}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </div>
+        ))}
+        {loading && <div className="message assistant loading">...</div>}
+      </div>
+
+      <div className="input-row">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && send()}
+          placeholder="Ask anything about the AWS documents..."
+          disabled={loading}
+        />
+        <button onClick={send} disabled={loading}>
+          {loading ? "..." : "Send"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+```
+
+#### 4. Replace `src/App.css`
+
+```css
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; }
+
+.chat-app {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header { text-align: center; margin-bottom: 1rem; }
+header h1 { margin: 0; color: #1e293b; }
+header small { color: #64748b; }
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  flex: 1;
+  overflow-y: auto;
+  max-height: 65vh;
+}
+
+.message {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  max-width: 80%;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.message.user {
+  background: #2563eb;
+  color: white;
+  align-self: flex-end;
+}
+
+.message.assistant {
+  background: #f1f5f9;
+  color: #1e293b;
+  align-self: flex-start;
+}
+
+.message.loading {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+details {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+details ul {
+  margin: 0.25rem 0 0 1rem;
+  padding: 0;
+}
+
+.input-row {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 0;
+}
+
+.input-row input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.input-row input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.input-row button {
+  padding: 0.75rem 1.5rem;
+  background: #2563eb;
+  color: white;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.input-row button:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+```
+
+#### 5. Production build
+
+```bash
+npm run build
+# Output: dist/ containing index.html + assets/
+```
+
+#### 6. Create the S3 bucket for the frontend
+
+```bash
+BUCKET="fcaj-chat-ui-$(date +%s)"  # unique bucket name
+echo "Bucket name: $BUCKET"
+
+aws s3 mb s3://$BUCKET --region ap-southeast-1
+
+# Remove Block Public Access so the static site can be served
+aws s3api delete-public-access-block --bucket $BUCKET --region ap-southeast-1
+
+# Bucket policy allowing public read
+cat > bucket-policy.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadGetObject",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::${BUCKET}/*"
+    }
+  ]
+}
+EOF
+
+aws s3api put-bucket-policy --bucket $BUCKET --policy file://bucket-policy.json
+
+# Enable static website hosting
+aws s3 website s3://$BUCKET \
+  --index-document index.html \
+  --error-document index.html
+
+echo "Website URL: http://${BUCKET}.s3-website-ap-southeast-1.amazonaws.com"
+```
+
+#### 7. Upload the build to S3
+
+```bash
+aws s3 sync dist/ s3://$BUCKET/ --delete --region ap-southeast-1
+```
+
+Open the browser: **http://`<bucket>`.s3-website-ap-southeast-1.amazonaws.com**
+
+Try asking: *"What S3 storage classes are available?"* → Frontend calls API → Bedrock retrieves from KB → Claude answers with citations.
+
+![chat ui](/images/5-Workshop/5.4-Frontend-API/chat-ui.png)
+
+#### 8. (Optional) Put CloudFront in front of S3
+
+CloudFront gives you HTTPS + caching + a global CDN:
+
+```bash
+# Origin Access Identity so CloudFront can read the (now private) bucket
+OAI=$(aws cloudfront create-cloud-front-origin-access-identity \
+  --cloud-front-origin-access-identity-config \
+  CallerReference=$(date +%s),Comment="OAI for $BUCKET" \
+  --query 'CloudFrontOriginAccessIdentity.Id' --output text)
+
+# Update bucket policy: only OAI can read
+cat > bucket-policy-cf.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": { "AWS": "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${OAI}" },
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::${BUCKET}/*"
+    }
+  ]
+}
+EOF
+aws s3api put-bucket-policy --bucket $BUCKET --policy file://bucket-policy-cf.json
+
+# Create the CloudFront distribution
+cat > cf-config.json << EOF
+{
+  "CallerReference": "$(date +%s)",
+  "Comment": "FCAJ Chat UI CDN",
+  "DefaultRootObject": "index.html",
+  "Origins": {
+    "Quantity": 1,
+    "Items": [{
+      "Id": "S3-${BUCKET}",
+      "DomainName": "${BUCKET}.s3.ap-southeast-1.amazonaws.com",
+      "S3OriginConfig": {
+        "OriginAccessIdentity": "origin-access-identity/cloudfront/${OAI}"
+      }
+    }]
+  },
+  "DefaultCacheBehavior": {
+    "TargetOriginId": "S3-${BUCKET}",
+    "ViewerProtocolPolicy": "redirect-to-https",
+    "AllowedMethods": ["GET", "HEAD", "OPTIONS"],
+    "CachedMethods": ["GET", "HEAD"],
+    "ForwardedValues": {
+      "QueryString": false,
+      "Cookies": {"Forward": "none"}
+    },
+    "MinTTL": 0,
+    "DefaultTTL": 3600,
+    "MaxTTL": 86400
+  },
+  "Enabled": true
+}
+EOF
+
+aws cloudfront create-distribution \
+  --distribution-config file://cf-config.json \
+  --query 'Distribution.DomainName' --output text
+```
+
+The CloudFront domain looks like `d111111abcdef8.cloudfront.net` — open it in the browser to test.
+
+#### 9. Custom domain (advanced, optional)
+
+If you own a domain (e.g. `chat.fcaj-demo.com`):
+
+1. Create an ACM certificate in **us-east-1** (required by CloudFront).
+2. Add `Aliases` + `ViewerCertificate` to the CloudFront distribution.
+3. Add a Route 53 `A` record pointing at the CloudFront distribution.
+
+#### Summary
+
+After this section you have:
+* React SPA built for production with Vite.
+* Frontend hosted on S3 (HTTP) or CloudFront (HTTPS + CDN).
+* Full end-to-end pipeline:
+
+```
+User → React UI → API Gateway → Lambda → Bedrock KB → answer + citation
+```
+
+Users can now chat directly with the Knowledge Base through a polished web UI.
+
+#### References
+* [Vite — Getting Started](https://vitejs.dev/guide/)
+* [Hosting SPA on S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/HostingWebsiteOnS3Setup.html)
+* [CloudFront with S3 origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-values-specify.html)
+* [React useState hook](https://react.dev/reference/react/useState)

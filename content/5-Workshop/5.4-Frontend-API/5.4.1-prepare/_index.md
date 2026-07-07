@@ -1,57 +1,142 @@
 ---
-title : "Prepare the environment"
-date : 2024-01-01
+title : "Prepare IAM Role & environment"
+date : 2026-04-12
 weight : 1
 chapter : false
 pre : " <b> 5.4.1 </b> "
 ---
 
-To prepare for this part of the workshop you will need to:
-+ Deploying a CloudFormation stack 
-+ Modifying a VPC route table. 
+In this section you will prepare:
 
-These components work together to simulate on-premises DNS forwarding and name resolution.
+* The **IAM Role** that lets Lambda call the Bedrock Knowledge Base.
+* The **source code layout** for Lambda + Frontend.
+* The **required IDs** (Knowledge Base ID, Model ARN) from section 5.3.
 
-#### Deploy the CloudFormation stack
+#### 1. Create the IAM Role for Lambda
 
-The CloudFormation template will create additional services to support an on-premises simulation:
-+ One Route 53 Private Hosted Zone that hosts Alias records for the PrivateLink S3 endpoint
-+ One Route 53 Inbound Resolver endpoint that enables "VPC Cloud" to resolve inbound DNS resolution requests to the Private Hosted Zone
-+ One Route 53 Outbound Resolver endpoint that enables "VPC On-prem" to forward DNS requests for S3 to "VPC Cloud"
+Lambda needs an **execution role** to invoke the Bedrock Agent Runtime API.
 
-![route 53 diagram](/images/5-Workshop/5.4-S3-onprem/route53.png)
+Create the trust policy allowing Lambda to assume the role:
 
-1. Click the following link to open the [AWS CloudFormation console](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https://s3.amazonaws.com/reinvent-endpoints-builders-session/R53CF.yaml&stackName=PLOnpremSetup). The required template will be pre-loaded into the menu. Accept all default and click Create stack.
+```bash
+cat > trust-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": { "Service": "lambda.amazonaws.com" },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
 
-![Create stack](/images/5-Workshop/5.4-S3-onprem/create-stack.png)
+aws iam create-role \
+  --role-name fcaj-chat-handler-role \
+  --assume-role-policy-document file://trust-policy.json \
+  --region ap-southeast-1
+```
 
-![Button](/images/5-Workshop/5.4-S3-onprem/create-stack-button.png)
+Create the permission policy that grants Bedrock + CloudWatch Logs access:
 
-It may take a few minutes for stack deployment to complete. You can continue with the next step without waiting for the deployemnt to finish.
+```bash
+cat > bedrock-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "BedrockRetrieveAndGenerate",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:RetrieveAndGenerate",
+        "bedrock:Retrieve",
+        "bedrock:InvokeModel"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:ap-southeast-1:*:log-group:/aws/lambda/fcaj-chat-handler:*"
+    }
+  ]
+}
+EOF
 
-#### Update on-premise private route table
+aws iam create-policy \
+  --policy-name fcaj-chat-handler-policy \
+  --policy-document file://bedrock-policy.json \
+  --region ap-southeast-1
 
-This workshop uses a strongSwan VPN running on an EC2 instance to simulate connectivty between an on-premises datacenter and the AWS cloud. Most of the required components are provisioned before your start. To finalize the VPN configuration, you will modify the "VPC On-prem" routing table to direct traffic destined for the cloud to the strongSwan VPN instance.
+aws iam attach-role-policy \
+  --role-name fcaj-chat-handler-role \
+  --policy-arn arn:aws:iam::<account-id>:policy/fcaj-chat-handler-policy
+```
 
-1. Open the Amazon EC2 console 
+> 💡 Replace `<account-id>` with your AWS Account ID (run `aws sts get-caller-identity` to get it).
 
-2. Select the instance named infra-vpngw-test. From the Details tab, copy the Instance ID and paste this into your text editor
+#### 2. Retrieve Knowledge Base ID and Model ARN
 
-![ec2 id](/images/5-Workshop/5.4-S3-onprem/ec2-onprem-id.png)
+```bash
+# Get the KB_ID from section 5.3
+KB_ID=$(aws bedrock-agent list-knowledge-bases \
+  --query "knowledgeBaseSummaries[?name=='fcaj-workshop-kb'].knowledgeBaseId" \
+  --output text --region ap-southeast-1)
 
-3. Navigate to the VPC menu by using the Search box at the top of the browser window.
+echo "KB_ID = $KB_ID"
 
-4. Click on Route Tables, select the RT Private On-prem route table, select the Routes tab, and click Edit Routes.
+# Model ARN is fixed for Claude 3.5 Sonnet in Singapore
+export MODEL_ARN="arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0"
+export REGION="ap-southeast-1"
+```
 
-![rt](/images/5-Workshop/5.4-S3-onprem/rt.png)
+Save these 3 values for the next step (5.4.2 — create Lambda).
 
-5. Click Add route.
-+ Destination: your Cloud VPC cidr range
-+ Target: ID of your infra-vpngw-test instance (you saved in your editor at step 1)
+#### 3. Prepare source-code directories
 
-![add route](/images/5-Workshop/5.4-S3-onprem/add-route.png)
+```bash
+mkdir -p ~/fcaj-chat-app
+cd ~/fcaj-chat-app
 
-6. Click Save changes
+# Sub-directories
+mkdir -p lambda       # Lambda function code
+mkdir -p frontend     # React SPA
+```
 
+#### 4. Verify environment
 
+Run these 3 checks — all 3 must succeed:
 
+```bash
+# (a) IAM role created
+aws iam get-role --role-name fcaj-chat-handler-role \
+  --query 'Role.RoleName' --output text
+# Expected: fcaj-chat-handler-role
+
+# (b) Bedrock model access enabled
+aws bedrock list-foundation-models --region ap-southeast-1 \
+  --query 'modelSummaries[?contains(modelId, `claude-3-5`)].modelId'
+# Expected: at least one Claude 3.5 Sonnet model
+
+# (c) Knowledge Base ACTIVE
+aws bedrock-agent get-knowledge-base \
+  --knowledge-base-id $KB_ID \
+  --region ap-southeast-1 \
+  --query 'knowledgeBase.status'
+# Expected: "ACTIVE"
+```
+
+![prepare complete](/images/5-Workshop/5.4-Frontend-API/prepare.png)
+
+If all 3 checks pass, you are ready for [section 5.4.2 — Create Lambda function & API Gateway endpoint](../5.4.2-create-interface-enpoint/).
+
+#### References
+* [Lambda execution role](https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html)
+* [Bedrock Agent Runtime permissions](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-lambda.html)
+* [ListKnowledgeBases API](https://docs.aws.amazon.com/bedrock-agent/latest/APIReference/API_ListKnowledgeBases.html)
