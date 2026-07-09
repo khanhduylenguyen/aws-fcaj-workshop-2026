@@ -1,122 +1,109 @@
 ﻿---
-title: "Event 1"
-date: 2024-01-01
+title: "Event 1 – FCAJ Community Day MAY 2026"
+date: 2026-05-23
 weight: 1
 chapter: false
 pre: " <b> 4.1. </b> "
 ---
 
-# Summary Report: “GenAI-powered App-DB Modernization workshop”
+# Event Report: FCAJ Community Day MAY 2026
 
-### Event Objectives
+## 1. Event Overview
 
-- Share best practices in modern application design
-- Introduce Domain-Driven Design (DDD) and event-driven architecture
-- Provide guidance on selecting the right compute services
-- Present AI tools to support the development lifecycle
+| | |
+|---|---|
+| **Event Name** | FCAJ Community Day MAY 2026 |
+| **Date & Time** | 08:30, May 23, 2026 |
+| **Venue** | 26th Floor, Bitexco Financial Tower, 02 Hai Trieu Street, District 1, HCMC |
+| **Organizer** | First Cloud AI Journey (FCAJ) community & AWS partners |
+| **My Role** | Attendee |
 
-### Speakers
+## 2. Event Objectives
 
-- **Jignesh Shah** – Director, Open Source Databases
-- **Erica Liu** – Sr. GTM Specialist, AppMod
-- **Fabrianne Effendi** – Assc. Specialist SA, Serverless Amazon Web Services
+FCAJ Community Day is a periodic offline meetup organized by the **First Cloud AI Journey** community, designed to:
 
-### Key Highlights
+- Update attendees on the latest **Cloud & Generative AI** trends on AWS.
+- Showcase AWS AI/Data services such as **Amazon Quick Suite** (no-code data workflow) and **Amazon CloudFront** (Edge & CDN security).
+- Share **hackathon field reports** — especially GenAI products built under intense time pressure.
+- Deep-dive into **Enterprise-Grade Multi-Agent architectures** applied to real business problems (banking, fintech).
 
-#### Identifying the drawbacks of legacy application architecture
+## 3. Speakers
 
-- Long product release cycles → Lost revenue/missed opportunities  
-- Inefficient operations → Reduced productivity, higher costs  
-- Non-compliance with security regulations → Security breaches, loss of reputation  
+| # | Speaker | Role | Organization |
+|---|---|---|---|
+| 1 | Tinh Truong | Platform Engineer | GoTymeX |
+| 2 | Anh Pham | Cloud Consultant | G-ASIAPACIFIC Vietnam |
+| 3 | Thinh Nguyen | DevOps Engineer | FCAJ |
+| 4 | Thao Nguyen, Mai Nguyen, Uyen Le | GenAI Engineers | Team VIB |
+| 5 | Duc Dao | Solutions Architect | Cloud Kinetics |
+| 6 | Vy Lam | Senior Business Systems Analyst | VPBank |
 
-#### Transitioning to modern application architecture – Microservices
+## 4. Session Highlights
 
-Migrating to a modular system — each function is an **independent service** communicating via **events**, built on three core pillars:
+### 4.1. Context Is Everything – Making AI Actually Work for You *(Tinh Truong – GoTymeX)*
 
-- **Queue Management**: Handle asynchronous tasks  
-- **Caching Strategy**: Optimize performance  
-- **Message Handling**: Flexible inter-service communication  
+- **Why many AI projects fail:** not because the model is weak, but because of **missing or wrong Context**. The same prompt with a different context can produce wildly different outputs.
+- **Mindset shift:** move from "writing better prompts" to **managing AI memory** (the *Second AI Brain* concept) — retrieval layers, memory state, and agent state to keep AI grounded in long-running contexts.
+- **Practical tips:** how to structure context so AI outputs are more stable and hallucination rates drop.
 
-#### Domain-Driven Design (DDD)
+### 4.2. Friendly AI Assistant with Amazon Quick *(Anh Pham)*
 
-- **Four-step method**: Identify domain events → arrange timeline → identify actors → define bounded contexts  
-- **Bookstore case study**: Demonstrates real-world DDD application  
-- **Context mapping**: 7 patterns for integrating bounded contexts  
+- **Quick Chat Agent** — AI assistant for data analysis and insight extraction.
+- **Quick Flows** — build automated workflows in natural language; no code required.
+- **Quick Spaces & Quick Sight** — collaborative workspace for sharing insights and turning raw data into dashboards.
 
-#### Event-Driven Architecture
+### 4.3. From Edge To Origin – CloudFront as Your Foundation *(Duc Dao – Cloud Kinetics)*
 
-- **3 integration patterns**: Publish/Subscribe, Point-to-point, Streaming  
-- **Benefits**: Loose coupling, scalability, resilience  
-- **Sync vs async comparison**: Understanding the trade-offs  
+- **Universal CDN:** web, API, media and streaming workloads all go through CloudFront.
+- **Cost optimization:** smart caching plus tiered pricing significantly reduce delivery cost.
+- **Reliability & Security:** improved DDoS resistance, built-in WAF, edge-level system protection.
 
-#### Compute Evolution
+### 4.4. 36 Hours with LotusHacks – Building UTMorpho from Idea to Reality *(Thinh Nguyen + LotusHacks team)*
 
-- **Shared Responsibility Model**: EC2 → ECS → Fargate → Lambda  
-- **Serverless benefits**: No server management, auto-scaling, pay-for-value  
-- **Functions vs Containers**: Criteria for appropriate choice  
+- The journey from zero to a clearly defined problem statement.
+- A **36-hour continuous coding sprint** — real hackathon workflow.
+- Lessons learned: the setbacks, the turning points, and how to deliver the final demo convincingly.
 
-#### Amazon Q Developer
+### 4.5. Non-Determinism of "Deterministic" LLM Settings *(Duc Dao)*
 
-- **SDLC automation**: From planning to maintenance  
-- **Code transformation**: Java upgrade, .NET modernization  
-- **AWS Transform agents**: VMware, Mainframe, .NET migration  
+- **How LLMs choose the next token:** probability-driven, not rule-based.
+- **The truth about `Temperature = 0`:** it does NOT guarantee perfect determinism. Inference optimizations (KV-cache, batching, sampling tweaks) still affect the output.
+- **Mitigation strategies:** fixed seeds, controlled retries, or self-consistency decoding when you need reproducible answers.
 
-### Key Takeaways
+### 4.6. Enterprise-Grade Multi-Agent System – Startup Credit Scoring *(Vy Lam – VPBank + VIB team)*
 
-#### Design Mindset
+- **The banking pain point:** startup financial data does not match existing core-banking schemas.
+- **Single Agent vs Multi-Agent:** when to use a single agent (simple task) versus multiple specialized agents (smaller scope, better hallucination control).
+- **"Virtual Credit Committee" blueprint:** a multi-agent system with strong **Guardrails, clear Compliance and measurable Operational ROI**.
 
-- **Business-first approach**: Always start from the business domain, not the technology  
-- **Ubiquitous language**: Importance of a shared vocabulary between business and tech teams  
-- **Bounded contexts**: Identifying and managing complexity in large systems  
+## 5. Three Pillars of Enterprise-Grade AI
 
-#### Technical Architecture
+From the talks, I synthesize **three core principles** for enterprise AI systems:
 
-- **Event storming technique**: Practical method for modeling business processes  
-- Use **event-driven communication** instead of synchronous calls  
-- **Integration patterns**: When to use sync, async, pub/sub, streaming  
-- **Compute spectrum**: Criteria for choosing between VM, containers, and serverless  
+| Pillar | Meaning | Real-world AWS example |
+|---|---|---|
+| **Securely** | Strong security, PII & prompt-injection filtering | Bedrock Guardrails, WAF + CloudFront |
+| **Reliably** | Stable, fault-tolerant, always-on | CloudFront CDN at the Edge, LLM fallback |
+| **Scalably** | Grow under load without rewriting the architecture | Scale OpenSearch OCU, multi-region |
 
-#### Modernization Strategy
+## 6. Applying to My Internship Project (FCAJ Internal Knowledge Assistant)
 
-- **Phased approach**: No rushing — follow a clear roadmap  
-- **7Rs framework**: Multiple modernization paths depending on the application  
-- **ROI measurement**: Cost reduction + business agility  
+- **CloudFront for the frontend:** add Amazon CloudFront to the deployment plan of the **FCAJ Internal Knowledge Assistant** capstone so the React SPA meets the **Securely + Reliably** bar.
+- **Stronger Guardrails:** when building the RAG chatbot on **Bedrock + Knowledge Base**, apply guardrail layers to **both input AND output** rather than filtering on only one side.
+- **Bring the "36-hour sprint" spirit** of LotusHacks into the biweekly project milestones.
+- **Explore Amazon Quick Suite** for log analysis and operational dashboard automation, reducing manual ops effort.
 
-### Applying to Work
+## 7. Personal Reflection
 
-- **Apply DDD** to current projects: Event storming sessions with business teams  
-- **Refactor microservices**: Use bounded contexts to define service boundaries  
-- **Implement event-driven patterns**: Replace some sync calls with async messaging  
-- **Adopt serverless**: Pilot AWS Lambda for suitable use cases  
-- **Try Amazon Q Developer**: Integrate into the dev workflow to boost productivity  
+The things that impressed me most:
 
-### Event Experience
+- **Multi-disciplinary speakers:** six sessions by engineers spanning platform, consulting, DevOps, GenAI engineering, solutions architecture and banking business analysis. For the first time I could see the full lifecycle of an AI product — from low-level infrastructure all the way up to a real enterprise problem.
+- **Vy Lam's (VPBank) talk** hit hardest. The "Virtual Credit Committee" is a brilliantly real-world problem: it has to satisfy strict financial regulations while still benefiting from multi-agent intelligence.
+- **A new mindset:** a product is more than code. It starts with the *right problem*, the *right context*, and an *architecture strong enough* to support the idea. LotusHacks' UTMorpho is a textbook example.
+- **Gifts & networking:** beyond knowledge, I received a small souvenir from the organizers and made new connections in the FCAJ community — useful for both my capstone and post-internship work.
 
-Attending the **“GenAI-powered App-DB Modernization”** workshop was extremely valuable, giving me a comprehensive view of modernizing applications and databases using advanced methods and tools. Key experiences included:
+## 8. Some Photos from the Event
 
-#### Learning from highly skilled speakers
-- Experts from AWS and major tech organizations shared **best practices** in modern application design.  
-- Through real-world case studies, I gained a deeper understanding of applying **DDD** and **Event-Driven Architecture** to large projects.  
+*Add your event photos here*
 
-#### Hands-on technical exposure
-- Participating in **event storming** sessions helped me visualize how to **model business processes** into domain events.  
-- Learned how to **split microservices** and define **bounded contexts** to manage large-system complexity.  
-- Understood trade-offs between **synchronous and asynchronous communication** and integration patterns like **pub/sub, point-to-point, streaming**.  
-
-#### Leveraging modern tools
-- Explored **Amazon Q Developer**, an AI tool for SDLC support from planning to maintenance.  
-- Learned to **automate code transformation** and pilot serverless with **AWS Lambda** to improve productivity.  
-
-#### Networking and discussions
-- The workshop offered opportunities to exchange ideas with experts, peers, and business teams, enhancing the **ubiquitous language** between business and tech.  
-- Real-world examples reinforced the importance of the **business-first approach** rather than focusing solely on technology.  
-
-#### Lessons learned
-- Applying DDD and event-driven patterns reduces **coupling** while improving **scalability** and **resilience**.  
-- Modernization requires a **phased approach** with **ROI measurement**; rushing the process can be risky.  
-- AI tools like Amazon Q Developer can significantly **boost productivity** when integrated into the current workflow.  
-
-#### Some event photos
-*Add your event photos here*  
-
-> Overall, the event not only provided technical knowledge but also helped me reshape my thinking about application design, system modernization, and cross-team collaboration.
+> Overall, FCAJ Community Day MAY 2026 was an eye-opening experience. What I had learned theoretically in online workshops was suddenly being applied in real production systems by senior engineers.
