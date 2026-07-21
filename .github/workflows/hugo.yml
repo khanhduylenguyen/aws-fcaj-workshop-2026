@@ -1,54 +1,34 @@
-name: Deploy Hugo to Pages
+name: Deploy Hugo site to GitHub Pages
+
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches:
+      - main
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
+  contents: write
 
 jobs:
-  build:
+  build-deploy:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: false
-          lfs: false
 
-      - name: Force clone theme
-        run: |
-          rm -rf themes/hugo-theme-learn
-          git clone --depth=1 https://github.com/matcornic/hugo-theme-learn.git themes/hugo-theme-learn
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
       - name: Setup Hugo
-        uses: peaceiris/actions-hugo@v3
+        uses: peaceiris/actions-hugo@v2
         with:
-          hugo-version: '0.140.1'
+          hugo-version: "0.134.3"
           extended: true
 
-      - name: Build
-        run: hugo --gc --minify --baseURL "${{ github.event.repository.html_url }}/"
+      - name: Build website
+        run: hugo --minify
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./public
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          publish_branch: gh-pages # <- đảm bảo đúng tên nhánh bạn dùng để deploy
+          force_orphan: true # <- đảm bảo xóa lịch sử cũ ở nhánh gh-pages (giảm lỗi)
