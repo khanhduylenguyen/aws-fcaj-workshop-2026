@@ -19,8 +19,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: false
+          lfs: false
 
-      - name: Clone theme
+      - name: Force clone theme
         run: |
           rm -rf themes/hugo-theme-learn
           git clone --depth=1 https://github.com/matcornic/hugo-theme-learn.git themes/hugo-theme-learn
