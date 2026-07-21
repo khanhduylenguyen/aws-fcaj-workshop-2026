@@ -1,70 +1,52 @@
 ﻿---
 title: "Workshop"
-date: 2026-04-12
+date: 2026-07-20
 weight: 5
 chapter: false
 pre: " <b> 5. </b> "
 ---
 
-# Xây dựng Chatbot Hỏi-Đáp với Amazon Bedrock, Knowledge Base & RAG
+# Xây dựng Hệ thống Y tế Từ xa Medi Path Ease
 
 #### Tổng quan
 
-**Retrieval Augmented Generation (RAG)** là kỹ thuật kết hợp giữa một mô hình ngôn ngữ lớn (LLM) và một cơ sở tri thức ngoài (thường là vector database). Khi người dùng đặt câu hỏi, hệ thống sẽ:
-1. Truy xuất những đoạn tài liệu liên quan nhất từ knowledge base (dựa trên semantic similarity).
-2. Đưa những đoạn này vào **context** của prompt.
-3. Để LLM sinh câu trả lời dựa trên ngữ liệu có sẵn, giảm hiện tượng "hallucination".
+**Medi Path Ease** là một ứng dụng y tế từ xa (Telemedicine) được xây dựng với mục tiêu kết nối bác sĩ và bệnh nhân một cách dễ dàng, an toàn và hiệu quả. Hệ thống cung cấp các tính năng chính:
 
-**Amazon Bedrock** là dịch vụ generative AI fully-managed của AWS, cung cấp nhiều Foundation Model (Claude, Llama, Titan, Mistral, Cohere). Đặc biệt, **Bedrock Knowledge Base** tự động hoá toàn bộ pipeline RAG (ingestion → chunking → embedding → retrieval) — giúp lập trình viên chỉ cần upload tài liệu lên S3, mọi phần còn lại Bedrock xử lý.
+* **Quản lý hồ sơ bệnh nhân** - Lưu trữ và truy xuất thông tin y tế một cách bảo mật
+* **Tư vấn từ xa (Telemedicine)** - Kết nối bệnh nhân với bác sĩ qua video call và chat
+* **Lưu trữ tài liệu y tế** - Upload và xem kết quả xét nghiệm, đơn thuốc, hồ sơ bệnh án
+* **Trợ lý ảo AI** - Hỗ trợ trả lời câu hỏi thường gặp về sức khỏe
+* **Thanh toán trực tuyến** - Tích hợp cổng thanh toán PayOS
 
-Trong workshop này, bạn sẽ xây dựng một chatbot hỏi-đáp nội bộ có khả năng trả lời câu hỏi dựa trên tài liệu của công ty (ví dụ: handbook nhân viên, tài liệu kỹ thuật AWS, FAQ nội bộ), đồng thời áp dụng **Guardrails** để đảm bảo đầu ra an toàn và phù hợp.
+#### Các dịch vụ AWS & Cloud sử dụng
 
-#### Kiến trúc tổng quan
-
-```mermaid
-flowchart LR
-  User[Người dùng<br>Web/Mobile]
-  subgraph AWS["AWS Cloud"]
-    CF[CloudFront + S3<br>Frontend React]
-    APIGW[API Gateway]
-    Lambda[Lambda Function<br>chat handler]
-    Bedrock[Bedrock<br>Claude 3.5 Sonnet]
-    KB[Bedrock Knowledge Base]
-    OS[(OpenSearch<br>Serverless)]
-    S3Doc[S3 Bucket<br>documents]
-  end
-
-  User -->|HTTPS| CF
-  CF -->|API call| APIGW
-  APIGW --> Lambda
-  Lambda -->|InvokeModel| Bedrock
-  Bedrock -->|Retrieve| KB
-  KB -->|Vector search| OS
-  KB -->|Sync| S3Doc
-  Bedrock -->|Answer| Lambda
-  Lambda -->|JSON| CF
-  CF --> User
-```
-
-#### Các dịch vụ AWS sử dụng trong workshop
-* **Amazon Bedrock** — Foundation Model (Claude 3.5 Sonnet) + Titan Embeddings v2
-* **Bedrock Knowledge Base** — pipeline RAG tự động
-* **Amazon OpenSearch Serverless** — vector database
-* **Amazon S3** — lưu trữ tài liệu nguồn
-* **AWS Lambda** — backend xử lý request chat
-* **Amazon API Gateway** — REST endpoint cho frontend
-* **Amazon CloudFront + S3** — host SPA frontend (React)
-* **Amazon Cognito** — authentication cho user (tuỳ chọn)
-* **Bedrock Guardrails** — lọc đầu ra có hại / PII
+| Dịch vụ | Mục đích sử dụng |
+|---------|-------------------|
+| **Amazon RDS PostgreSQL** | Cơ sở dữ liệu quan hệ chính cho ứng dụng |
+| **Amazon S3** | Lưu trữ tài liệu y tế (lab results, prescriptions, EHR) |
+| **Amazon CloudFront** | CDN phân phối nội dung tĩnh toàn cầu |
+| **Amazon Cognito** | Xác thực và quản lý người dùng |
+| **Amazon Bedrock** | Trợ lý ảo AI chatbot |
+| **DigitalOcean App Platform** | Máy chủ ứng dụng Node.js/Express |
+| **PayOS** | Cổng thanh toán VNPay/QrCode |
 
 #### Kết quả đạt được sau workshop
-Sau khi hoàn thành, bạn sẽ có một chatbot RAG hoạt động thật, có thể hỏi đáp trên tập tài liệu tuỳ chỉnh, có log/audit, áp dụng Guardrails để đảm bảo Responsible AI, và triển khai hoàn chỉết trên hạ tầng serverless AWS.
+
+Sau khi hoàn thành, bạn sẽ có một hệ thống telemedicine hoàn chỉnh với:
+* Backend Express.js chạy trên DigitalOcean
+* Cơ sở dữ liệu PostgreSQL trên AWS RDS
+* Hệ thống lưu trữ file an toàn với S3 + CloudFront
+* Xác thực người dùng với Cognito + JWT
+* Chatbot AI hỗ trợ bệnh nhân
+* Thanh toán trực tuyến qua PayOS
 
 #### Nội dung workshop
 
-1. [Tổng quan workshop](5.1-Workshop-overview/)
-2. [Các bước chuẩn bị](5.2-Prerequiste/)
-3. [Xây dựng Knowledge Base với S3 + OpenSearch](5.3-Knowledge-Base/)
-4. [Xây dựng Frontend & API (Lambda + API Gateway)](5.4-Frontend-API/)
-5. [Bedrock Guardrails (Responsible AI)](5.5-Guardrails/)
-6. [Dọn dẹp tài nguyên](5.6-Cleanup/)
+1. [Sơ đồ kiến trúc & Tổng quan](5.1-Architecture/)
+2. [Cấu hình Cơ sở dữ liệu RDS PostgreSQL](5.2-RDS-PostgreSQL/)
+3. [Dịch vụ Lưu trữ S3 & CloudFront](5.3-S3-CloudFront/)
+4. [Xác thực người dùng với Amazon Cognito](5.4-Cognito/)
+5. [Trợ lý ảo AI Chatbot với Amazon Bedrock](5.5-Bedrock-AI/)
+6. [Cấu hình DigitalOcean & Tích hợp PayOS](5.6-DigitalOcean-PayOS/)
+7. [Demo Giao diện Ứng dụng Thực tế](5.7-Demo/)
+8. [Dọn dẹp tài nguyên](5.8-Cleanup/)

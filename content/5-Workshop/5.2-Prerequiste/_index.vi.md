@@ -1,6 +1,6 @@
 ---
 title : "Các bước chuẩn bị"
-date : 2026-04-12
+date : 2026-07-20
 weight : 2
 chapter : false
 pre : " <b> 5.2. </b> "
@@ -8,128 +8,189 @@ pre : " <b> 5.2. </b> "
 
 #### 1. Tài khoản AWS & Region
 
-Trong workshop này, chúng ta sẽ dùng region **Singapore (ap-southeast-1)**. Hãy đảm bảo bạn đã:
-* Đăng nhập vào AWS Console với user có quyền Administrator (hoặc user có IAM policy dưới đây).
+Trong workshop này, chúng ta sẽ dùng region **Singapore (ap-southeast-1)** vì:
+* Latency thấp từ Việt Nam
+* Hỗ trợ đầy đủ các tính năng S3
+
+Hãy đảm bảo bạn đã:
+* Đăng nhập vào AWS Console với user có quyền IAM (hoặc user có quyền Administrator).
 * Region được chọn là **Singapore** ở góc trên bên phải Console.
 
-#### 2. Bật Model Access trong Amazon Bedrock
+#### 2. Tạo IAM User cho Backend
 
-Trước khi dùng được Claude hay Titan, bạn cần **request access** cho model:
+Tạo một IAM user riêng cho backend với quyền hạn chế (least privilege):
 
-1. Mở Amazon Bedrock Console ở region Singapore.
-2. Vào **Model access** ở menu trái dưới mục **Bedrock configurations**.
-3. Click **Manage model access** → chọn các model sau:
-   * **Anthropic:** Claude 3.5 Sonnet, Claude 3 Haiku
-   * **Amazon:** Titan Embeddings v2, Titan Text G1 - Express
-   * (tuỳ chọn) **Meta:** Llama 3 8B Instruct
-4. Click **Request model access** và chờ vài phút để AWS duyệt.
+1. Mở **IAM Console** → **Users** → **Create user**
+2. Tên user: `medi-path-ease-s3`
+3. Chọn **Access key - Programmatic access**
+4. Click **Next: Permissions**
+5. Chọn **Attach existing policies directly** → **Create policy**
 
-![model access](/images/5-Workshop/5.2-Prerequisite/model-access.png)
-
-#### 3. Tạo IAM policy cho user thực hiện workshop
-
-Gắn policy sau vào IAM user của bạn (hoặc dùng AdministratorAccess cho đơn giản):
+**IAM Policy cho S3:**
 
 ```json
 {
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "BedrockWorkshop",
+      "Sid": "AllowSpecificBucketOnly",
       "Effect": "Allow",
       "Action": [
-        "bedrock:*",
-        "s3:CreateBucket",
-        "s3:DeleteBucket",
-        "s3:GetObject",
-        "s3:GetObjectVersion",
-        "s3:ListBucket",
         "s3:PutObject",
+        "s3:GetObject",
         "s3:DeleteObject",
-        "s3:GetBucketPolicy",
-        "s3:PutBucketPolicy",
-        "s3:GetBucketCORS",
-        "s3:PutBucketCORS",
-        "aoss:*",
-        "iam:CreateRole",
-        "iam:DeleteRole",
-        "iam:AttachRolePolicy",
-        "iam:DetachRolePolicy",
-        "iam:PassRole",
-        "iam:CreatePolicy",
-        "iam:DeletePolicy",
-        "iam:GetRole",
-        "iam:GetPolicy",
-        "lambda:CreateFunction",
-        "lambda:DeleteFunction",
-        "lambda:GetFunction",
-        "lambda:InvokeFunction",
-        "lambda:UpdateFunctionCode",
-        "lambda:UpdateFunctionConfiguration",
-        "apigateway:*",
-        "cloudfront:*",
-        "logs:CreateLogGroup",
-        "logs:DeleteLogGroup",
-        "logs:DescribeLogGroups",
-        "logs:PutRetentionPolicy",
-        "cloudwatch:GetMetricData",
-        "cloudwatch:GetMetricStatistics",
-        "cloudwatch:ListMetrics",
-        "cloudwatch:DescribeAlarms"
+        "s3:HeadObject"
       ],
-      "Resource": "*"
+      "Resource": "arn:aws:s3:::medi-path-ease-uploads/*"
+    },
+    {
+      "Sid": "AllowListBucket",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket"
+      ],
+      "Resource": "arn:aws:s3:::medi-path-ease-uploads",
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": "uploads/*"
+        }
+      }
+    },
+    {
+      "Sid": "DenyDeleteBucket",
+      "Effect": "Deny",
+      "Action": [
+        "s3:DeleteBucket",
+        "s3:DeleteBucketPolicy",
+        "s3:PutBucketPolicy"
+      ],
+      "Resource": "arn:aws:s3:::medi-path-ease-uploads"
     }
   ]
 }
 ```
 
-> 💡 **Lưu ý:** Workshop này dùng các dịch vụ fully-managed nên hầu hết chi phí nằm ở Bedrock (theo token). Mỗi query Claude 3.5 Sonnet ~$0.003 input + $0.015 output token. Vài chục câu hỏi trong workshop chỉ tốn chưa đến $1. OpenSearch Serverless có minimum charge $0.24/OCU/giờ — bạn nhớ dọn dẹp sau workshop.
+6. Attach policy vào user
+7. **Lưu lại Access Key ID và Secret Access Key** (chỉ hiển thị 1 lần duy nhất!)
 
-#### 4. Cài đặt công cụ local
+![IAM User Creation](/images/5-Workshop/5.2-Prerequisite/create-iam-user.png)
 
-* **AWS CLI v2** (đã cài ở tuần 1): `aws --version`
-* **Node.js 18+** và **npm** để build React frontend (tuỳ chọn nếu dùng frontend có sẵn).
-* **Python 3.10+** và **boto3** (đã có sẵn trên Amazon Linux 2023 nếu bạn dùng Cloud9/CloudShell).
+#### 3. Cài đặt AWS CLI
 
 ```bash
-# Cập nhật AWS CLI & boto3
-pip install --upgrade boto3 awscli
-aws configure  # nhập Access Key, Secret Key, region ap-southeast-1, output json
+# Kiểm tra đã cài chưa
+aws --version
+
+# Nếu chưa cài, tải và cài AWS CLI v2
+# macOS/Linux:
+curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
+sudo installer -pkg AWSCLIV2.pkg -target /
+
+# Windows: Tải từ https://aws.amazon.com/cli/
 ```
 
-#### 5. Tạo S3 bucket chứa tài liệu nguồn
+#### 4. Cấu hình AWS Credentials
 
 ```bash
-# Tạo bucket documents cho Knowledge Base
-aws s3 mb s3://fcaj-bedrock-docs-<your-id> --region ap-southeast-1
-aws s3api put-bucket-versioning \
-  --bucket fcaj-bedrock-docs-<your-id> \
-  --versioning-configuration Status=Enabled
+# Cấu hình credentials cho IAM user vừa tạo
+aws configure
 
-# Upload một số tài liệu mẫu (download từ AWS Whitepapers, hoặc dùng file của bạn)
-curl -o aws-overview.pdf https://docs.aws.amazon.com/whitepapers/latest/aws-overview/introduction.html
-aws s3 cp aws-overview.pdf s3://fcaj-bedrock-docs-<your-id>/
+# Nhập các thông tin:
+# AWS Access Key ID [None]: AKIAIOSFODNN7EXAMPLE
+# AWS Secret Access Key [None]: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+# Default region name [None]: ap-southeast-1
+# Default output format [None]: json
 ```
 
-#### 6. Kiểm tra môi trường
+Verify credentials:
 
 ```bash
-# Verify Bedrock access
-aws bedrock list-foundation-models --region ap-southeast-1 \
-  --query 'modelSummaries[?contains(modelId, `claude`) || contains(modelId, `titan-embed`)].modelId'
-
-# Verify S3 bucket
-aws s3 ls s3://fcaj-bedrock-docs-<your-id>/
-
-# Verify IAM user
 aws sts get-caller-identity
 ```
 
-Nếu cả 3 lệnh đều trả về kết quả thành công, bạn đã sẵn sàng cho phần tiếp theo.
+Kết quả mong đợi:
+```json
+{
+    "UserId": "AIDAIOSFODNN7EXAMPLE",
+    "Account": "123456789012",
+    "Arn": "arn:aws:iam::123456789012:user/medi-path-ease-s3"
+}
+```
 
-![prereq complete](/images/5-Workshop/5.2-Prerequisite/complete.png)
+#### 5. Kiểm tra Node.js và npm
+
+```bash
+# Kiểm tra version
+node --version    # >= 18.x
+npm --version     # >= 9.x
+```
+
+Nếu chưa cài, tải từ https://nodejs.org/
+
+#### 6. Clone và cài đặt project
+
+```bash
+# Clone project
+cd /path/to/your/projects
+git clone <medi-path-ease-repo>
+
+# Di chuyển vào thư mục
+cd medi-path-ease-main/medi-path-ease-main
+
+# Cài đặt dependencies
+npm install
+
+# Cài đặt AWS SDK cho Node.js (đã có trong package.json)
+npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
+```
+
+#### 7. Cấu hình Environment Variables
+
+Copy file `.env.example` thành `.env` và điền thông tin:
+
+```bash
+# Backend config
+PORT=3001
+NODE_ENV=development
+
+# AWS S3 Configuration
+AWS_REGION=ap-southeast-1
+AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE      # Thay bằng Access Key của bạn
+AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/...     # Thay bằng Secret Key của bạn
+AWS_S3_BUCKET=medi-path-ease-uploads         # Bucket name
+
+# JWT (để test authenticated requests)
+JWT_SECRET=your-super-secret-jwt-key-minimum-32-chars
+```
+
+#### 8. Kiểm tra môi trường
+
+Chạy script kiểm tra:
+
+```bash
+# Verify AWS credentials
+aws s3 ls 2>&1 | head -5
+
+# Verify Node.js
+node -e "console.log('Node OK:', process.version)"
+
+# Test S3 connection (sẽ thất bại nếu bucket chưa tồn tại - OK)
+aws s3api head-bucket --bucket medi-path-ease-uploads 2>&1 || echo "Bucket chưa tồn tại - sẽ tạo ở bước tiếp theo"
+```
+
+Kết quả mong đợi:
+```
+An error occurred (404) when calling the HeadBucket operation: Not Found
+Bucket chưa tồn tại - sẽ tạo ở bước tiếp theo
+```
+
+#### 9. Chuẩn bị Postman/curl để test API
+
+Download Postman hoặc chuẩn bị curl commands để test API endpoints.
+
+> ⚠️ **Lưu ý bảo mật:** Không commit file `.env` lên Git. Thêm vào `.gitignore` nếu chưa có.
 
 #### Tài liệu tham khảo
-* [Amazon Bedrock Model Access](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)
-* [Setting up Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/setting-up.html)
+* [Creating an IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html)
 * [AWS CLI Configuration](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html)
+* [Installing AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)

@@ -1,69 +1,52 @@
 ﻿---
 title: "Workshop"
-date: 2026-04-12
+date: 2026-07-20
 weight: 5
 chapter: false
 pre: " <b> 5. </b> "
 ---
-# Build a Q&A Chatbot with Amazon Bedrock, Knowledge Base & RAG
+
+# Building Medi Path Ease Telemedicine System
 
 #### Overview
 
-**Retrieval Augmented Generation (RAG)** is a technique that combines a large language model (LLM) with an external knowledge base (typically a vector database). When a user asks a question, the system:
-1. Retrieves the most relevant chunks from the knowledge base (based on semantic similarity).
-2. Injects them into the **context** of the prompt.
-3. Lets the LLM generate an answer grounded in the available context, reducing "hallucination".
+**Medi Path Ease** is a telemedicine application designed to connect doctors and patients easily, securely, and effectively. The system provides key features:
 
-**Amazon Bedrock** is AWS's fully-managed generative AI service, providing many Foundation Models (Claude, Llama, Titan, Mistral, Cohere). In particular, **Bedrock Knowledge Base** automates the whole RAG pipeline (ingestion → chunking → embedding → retrieval) — you only upload your documents to S3 and Bedrock handles the rest.
+* **Patient Record Management** - Securely store and retrieve medical information
+* **Remote Consultation (Telemedicine)** - Connect patients with doctors via video calls and chat
+* **Medical Document Storage** - Upload and view lab results, prescriptions, medical records
+* **AI Virtual Assistant** - Support answering common health questions
+* **Online Payment** - PayOS payment gateway integration
 
-In this workshop you will build an internal Q&A chatbot capable of answering questions grounded in your company's documents (e.g. employee handbook, AWS technical docs, internal FAQ), while applying **Guardrails** to ensure safe and compliant outputs.
+#### AWS & Cloud Services Used
 
-#### Architecture Overview
+| Service | Purpose |
+|---------|---------|
+| **Amazon RDS PostgreSQL** | Main relational database for the application |
+| **Amazon S3** | Store medical documents (lab results, prescriptions, EHR) |
+| **Amazon CloudFront** | Global CDN for static content delivery |
+| **Amazon Cognito** | User authentication and management |
+| **Amazon Bedrock** | AI chatbot virtual assistant |
+| **DigitalOcean App Platform** | Node.js/Express application server |
+| **PayOS** | VNPay/QrCode payment gateway |
 
-```mermaid
-flowchart LR
-  User[User<br>Web/Mobile]
-  subgraph AWS["AWS Cloud"]
-    CF[CloudFront + S3<br>React frontend]
-    APIGW[API Gateway]
-    Lambda[Lambda Function<br>chat handler]
-    Bedrock[Bedrock<br>Claude 3.5 Sonnet]
-    KB[Bedrock Knowledge Base]
-    OS[(OpenSearch<br>Serverless)]
-    S3Doc[S3 Bucket<br>documents]
-  end
+#### Workshop Outcomes
 
-  User -->|HTTPS| CF
-  CF -->|API call| APIGW
-  APIGW --> Lambda
-  Lambda -->|InvokeModel| Bedrock
-  Bedrock -->|Retrieve| KB
-  KB -->|Vector search| OS
-  KB -->|Sync| S3Doc
-  Bedrock -->|Answer| Lambda
-  Lambda -->|JSON| CF
-  CF --> User
-```
-
-#### AWS services used in this workshop
-* **Amazon Bedrock** — Foundation Model (Claude 3.5 Sonnet) + Titan Embeddings v2
-* **Bedrock Knowledge Base** — automated RAG pipeline
-* **Amazon OpenSearch Serverless** — vector database
-* **Amazon S3** — source document storage
-* **AWS Lambda** — backend chat handler
-* **Amazon API Gateway** — REST endpoint for the frontend
-* **Amazon CloudFront + S3** — host the SPA frontend (React)
-* **Amazon Cognito** — user authentication (optional)
-* **Bedrock Guardrails** — filter harmful / PII outputs
-
-#### Workshop outcomes
-By the end of this workshop you will have a working RAG chatbot that can answer questions over a custom document set, with logging/auditing, Guardrails for Responsible AI, and full serverless deployment on AWS.
+After completing this workshop, you will have a complete telemedicine system with:
+* Express.js backend running on DigitalOcean
+* PostgreSQL database on AWS RDS
+* Secure file storage with S3 + CloudFront
+* User authentication with Cognito + JWT
+* AI chatbot supporting patients
+* Online payment via PayOS
 
 #### Content
 
-1. [Workshop overview](5.1-Workshop-overview/)
-2. [Prerequisites](5.2-Prerequiste/)
-3. [Build the Knowledge Base with S3 + OpenSearch](5.3-Knowledge-Base/)
-4. [Build the Frontend & API (Lambda + API Gateway)](5.4-Frontend-API/)
-5. [Bedrock Guardrails (Responsible AI)](5.5-Guardrails/)
-6. [Clean up resources](5.6-Cleanup/)
+1. [Architecture Diagram & Overview](5.1-Architecture/)
+2. [RDS PostgreSQL Database Configuration](5.2-RDS-PostgreSQL/)
+3. [S3 Storage & CloudFront Service](5.3-S3-CloudFront/)
+4. [User Authentication with Amazon Cognito](5.4-Cognito/)
+5. [AI Chatbot with Amazon Bedrock](5.5-Bedrock-AI/)
+6. [DigitalOcean Configuration & PayOS Integration](5.6-DigitalOcean-PayOS/)
+7. [Demo - Real Application Interface](5.7-Demo/)
+8. [Cleanup Resources](5.8-Cleanup/)

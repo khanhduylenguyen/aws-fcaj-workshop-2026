@@ -1,82 +1,104 @@
 ---
 title : "Giới thiệu workshop"
-date : 2026-04-12
+date : 2026-07-20
 weight : 1
 chapter : false
 pre : " <b> 5.1. </b> "
 ---
 
-#### Giới thiệu về Amazon Bedrock & RAG
+#### Giới thiệu về Amazon S3 trong Medi Path Ease
 
-**Amazon Bedrock** là dịch vụ generative AI fully-managed của AWS, cho phép truy cập nhiều Foundation Model (FM) hàng đầu thông qua một API duy nhất, không cần quản lý hạ tầng ML.
+**Amazon S3 (Simple Storage Service)** là dịch vụ lưu trữ object của AWS, được sử dụng trong Medi Path Ease để lưu trữ các tài liệu y tế quan trọng của bệnh nhân.
 
-* **Foundation Model khả dụng:** Anthropic Claude 3.5 Sonnet/Haiku, Meta Llama 3, Amazon Titan (Text/Embeddings/Image), Mistral, Cohere Command, Stability AI Stable Diffusion.
-* **Bedrock Knowledge Base** tự động hoá pipeline RAG: ingest tài liệu từ S3 → chunking → embedding bằng Titan Embeddings v2 → lưu vào OpenSearch Serverless → sẵn sàng retrieve.
-* **Bedrock Agents** cho phép model tự lập kế hoạch & gọi tool (Lambda) để hoàn thành tác vụ nhiều bước.
-* **Bedrock Guardrails** giúp lọc nội dung có hại, ẩn thông tin cá nhân (PII) và ngăn chặn prompt injection.
+#### Các tính năng S3 được sử dụng
 
-#### Vì sao RAG lại quan trọng?
+* **Lưu trữ kết quả xét nghiệm (Lab Results):** Upload và truy xuất file PDF kết quả xét nghiệm máu, nước tiểu, và các xét nghiệm chuyên sâu.
+* **Lưu trữ đơn thuốc (Prescriptions):** Lưu trữ hình ảnh đơn thuốc được chụp hoặc scan.
+* **Lưu trữ hồ sơ điện tử (EHR):** Lưu trữ các tài liệu hồ sơ bệnh án điện tử.
+* **File đính kèm telemedicine:** Lưu trữ hình ảnh, tài liệu được chia sẻ trong buổi khám từ xa.
+* **Presigned URLs:** Tạo URL tạm thời để bệnh nhân và bác sĩ xem file mà không cần public access.
 
-Các LLM mặc định chỉ "biết" những gì trong dữ liệu huấn luyện của chúng và có "kiến thức cắt" (knowledge cutoff). Đối với dữ liệu nội bộ công ty (handbook, tài liệu kỹ thuật, FAQ), LLM không thể trả lời chính xác nếu không cung cấp thêm ngữ liệu. RAG giải quyết vấn đề này bằng cách:
+#### Tại sao dùng S3 thay vì lưu trữ trong database?
 
-* **Cập nhật kiến thức real-time** không cần fine-tune model.
-* **Giảm hallucination** nhờ model có ngữ liệu để tham chiếu.
-* **Trích dẫn nguồn** (citation) — user có thể kiểm tra câu trả lời dựa trên tài liệu nào.
-* **Bảo mật dữ liệu** — tài liệu nội bộ không bị "học" lại bởi model của bên thứ ba.
+* **Bảo mật:** File được lưu trữ riêng biệt với database, chỉ truy cập qua presigned URL có thời hạn.
+* **Hiệu suất:** Object storage tối ưu cho file lớn (PDF, hình ảnh) hơn so với lưu trữ trong MongoDB.
+* **Chi phí:** S3 Standard rẻ hơn so với MongoDB Atlas cho việc lưu trữ file lớn.
+* **Durability:** 99.999999999% (11 nines) độ bền dữ liệu.
+* **Versioning:** Có thể khôi phục file nếu bị xóa nhầm.
+
+#### Cấu trúc folder trong S3 bucket
+
+```
+medi-path-ease-uploads/
+├── lab-results/           # Kết quả xét nghiệm
+│   └── <patientId>/
+│       └── <yyyy>/
+│           └── <mm>/
+├── prescriptions/         # Đơn thuốc
+│   └── <patientId>/
+│       └── <yyyy>/
+│           └── <mm>/
+├── ehr/                  # Hồ sơ bệnh án điện tử
+│   └── <patientId>/
+│       └── <yyyy>/
+│           └── <mm>/
+└── chat-attachments/     # File đính kèm chat telemedicine
+    └── <patientId>/
+        └── <yyyy>/
+            └── <mm>/
+```
 
 #### Tổng quan về workshop
 
-Trong workshop này, bạn sẽ xây dựng một **chatbot hỏi-đáp** hoàn chỉết với 3 thành phần chính:
+Trong workshop này, bạn sẽ cấu hình và tích hợp Amazon S3 vào hệ thống Medi Path Ease:
 
-* **Cloud side (AWS):** dịch vụ Bedrock, OpenSearch Serverless, S3, Lambda, API Gateway, CloudFront.
-* **Application side:** Lambda function xử lý chat request + Frontend React đơn giản (UI chat).
-* **AI side:** Claude 3.5 Sonnet làm LLM, Titan Embeddings v2 làm embedding model, Guardrails lọc output.
-
-Chúng ta sẽ dùng region **Singapore (ap-southeast-1)** vì hỗ trợ đầy đủ các model Claude 3.5 + Titan Embeddings v2 + OpenSearch Serverless, đồng thời có latency thấp từ Việt Nam.
+* **Cloud side (AWS):** Tạo S3 bucket với cấu hình bảo mật, IAM policies, presigned URLs.
+* **Backend side:** Tích hợp AWS SDK vào Express server, xây dựng API upload/download.
+* **Frontend side:** Kết nối React UI với backend để upload file và hiển thị presigned URLs.
 
 ```mermaid
 flowchart TB
   subgraph Frontend
-    UI[React UI<br>Chat box]
+    UI[React UI<br>Upload/File Viewer]
+  end
+
+  subgraph Backend["Express Backend :3001"]
+    API[API Routes<br>/api/uploads/*]
+    S3Service[S3 Service<br>s3Service.js]
   end
 
   subgraph AWS["AWS Region ap-southeast-1"]
-    CF[S3 + CloudFront]
-    APIGW[API Gateway REST API]
-    Lambda[Lambda chat handler]
-    Bedrock[Bedrock Claude 3.5 Sonnet]
-    KB[Knowledge Base]
-    OpenSearch[(OpenSearch Serverless<br>Vector index)]
-    DocS3[(S3 Bucket<br>documents/)]
-    Guard[Guardrails]
+    S3[(S3 Bucket<br>medi-path-ease-uploads)]
+    IAM[IAM User<br>Restricted Permissions]
   end
 
-  UI -->|HTTPS| CF
-  CF -->|Fetch UI + call API| APIGW
-  APIGW -->|POST /chat| Lambda
-  Lambda -->|InvokeModel + Retrieve| Bedrock
-  Bedrock --> KB
-  KB -->|Vector search| OpenSearch
-  KB -.->|Sync on change| DocS3
-  Bedrock -->|Apply| Guard
-  Bedrock -->|Answer + citation| Lambda
-  Lambda -->|JSON| APIGW
-  APIGW --> CF --> UI
+  UI -->|1. Upload File| API
+  API -->|2. PutObject| S3Service
+  S3Service -->|3. AWS SDK| S3
+  S3 -->|4. ETag| S3Service
+  S3Service -->|5. Key/Metadata| API
+  API -->|6. Success Response| UI
+  
+  UI -->|7. Request View| API
+  API -->|8. GetSignedUrl| S3Service
+  S3Service -->|9. Presigned URL (1h)| API
+  API -->|10. Redirect/URL| UI
+  UI -->|11. Fetch File| S3
+
+  IAM -.->|Credentials| S3Service
 ```
 
 #### Kết quả sau workshop
 
 Bạn sẽ có:
-* Một Knowledge Base hoạt động, có thể ingest tài liệu PDF/Markdown/HTML.
-* REST API `/chat` trả về câu trả lời + citation.
-* Frontend React chat UI chạy trên CloudFront.
-* Guardrails lọc nội dung có hại & PII.
-* CloudWatch dashboard theo dõi token sử dụng, latency, cost.
-
-![overview](/images/5-Workshop/5.1-Workshop-overview/diagram1.png)
+* S3 bucket được cấu hình với versioning và encryption.
+* IAM user với quyền hạn chế (least privilege).
+* Backend API hoàn chỉnh cho upload/download file.
+* Frontend tích hợp để upload kết quả xét nghiệm và đơn thuốc.
+* Presigned URL system để bảo mật truy cập file.
 
 #### Tài liệu tham khảo
-* [Amazon Bedrock User Guide](https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html)
-* [Bedrock Knowledge Base](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html)
-* [Retrieval Augmented Generation (RAG) pattern](https://docs.aws.amazon.com/prescriptive-guidance/latest/retrieval-augmented-generation-options/rag-architecture.html)
-* [Amazon Titan Embeddings](https://docs.aws.amazon.com/bedrock/latest/userguide/titan-embedding-models.html)
+* [Amazon S3 Documentation](https://docs.aws.amazon.com/s3/index.html)
+* [AWS SDK for JavaScript v3](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/)
+* [S3 Presigned URLs](https://docs.aws.amazon.com/AmazonS3/latest/userguide/PresignedUrlUploadObject.html)
+* [IAM Best Practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)

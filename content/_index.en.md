@@ -3,6 +3,7 @@ title: "Internship Report"
 date: 2024-01-01
 weight: 1
 chapter: false
+avatar: "https://static.topcv.vn/avatars/mXbxgbJXD8htOTtsN6Io_69b975b3a3629_cvtpl.jpg"
 ---
 
     
@@ -28,7 +29,7 @@ chapter: false
 &emsp; **Internship Duration:** From 12/04/2026 to 12/07/2026
 
 
-![Your profile picture](/images/AnhDaiDien.jpg)
+![Your profile picture]({{< param "avatar" >}})
 
 ### Report Content
 

@@ -1,135 +1,194 @@
 ---
 title : "Prerequisites"
-date : 2026-04-12
+date : 2026-07-20
 weight : 2
 chapter : false
 pre : " <b> 5.2. </b> "
 ---
 
-#### 1. AWS account & Region
+#### 1. AWS Account & Region
 
-In this workshop we will use the **Singapore (ap-southeast-1)** region. Please ensure that you:
-* Are logged into the AWS Console with a user that has Administrator access (or the IAM policy below).
-* Have **Singapore** selected in the top-right corner of the Console.
+In this workshop, we'll use the **Singapore (ap-southeast-1)** region because:
+* Low latency from Vietnam
+* Full support for all S3 features
 
-#### 2. Enable Model Access in Amazon Bedrock
+Make sure you:
+* Logged into AWS Console with a user with IAM permissions (or Administrator).
+* Region is set to **Singapore** in the top-right corner of the Console.
 
-Before you can invoke Claude or Titan, you need to **request model access**:
+#### 2. Create IAM User for Backend
 
-1. Open the Amazon Bedrock Console in the Singapore region.
-2. Choose **Model access** in the left menu under **Bedrock configurations**.
-3. Click **Manage model access** and select these models:
-   * **Anthropic:** Claude 3.5 Sonnet, Claude 3 Haiku
-   * **Amazon:** Titan Embeddings v2, Titan Text G1 - Express
-   * (optional) **Meta:** Llama 3 8B Instruct
-4. Click **Request model access** and wait a few minutes for AWS to approve.
+Create a separate IAM user for the backend with restricted permissions (least privilege):
 
-![model access](/images/5-Workshop/5.2-Prerequisite/model-access.png)
+1. Open **IAM Console** → **Users** → **Create user**
+2. User name: `medi-path-ease-s3`
+3. Select **Access key - Programmatic access**
+4. Click **Next: Permissions**
+5. Select **Attach existing policies directly** → **Create policy**
 
-#### 3. Create an IAM policy for the workshop user
-
-Attach the following policy to your IAM user (or simply use AdministratorAccess for the workshop):
+**S3 IAM Policy:**
 
 ```json
 {
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "BedrockWorkshop",
+      "Sid": "AllowSpecificBucketOnly",
       "Effect": "Allow",
       "Action": [
-        "bedrock:*",
-        "s3:CreateBucket",
-        "s3:DeleteBucket",
-        "s3:GetObject",
-        "s3:GetObjectVersion",
-        "s3:ListBucket",
         "s3:PutObject",
+        "s3:GetObject",
         "s3:DeleteObject",
-        "s3:GetBucketPolicy",
-        "s3:PutBucketPolicy",
-        "s3:GetBucketCORS",
-        "s3:PutBucketCORS",
-        "aoss:*",
-        "iam:CreateRole",
-        "iam:DeleteRole",
-        "iam:AttachRolePolicy",
-        "iam:DetachRolePolicy",
-        "iam:PassRole",
-        "iam:CreatePolicy",
-        "iam:DeletePolicy",
-        "iam:GetRole",
-        "iam:GetPolicy",
-        "lambda:CreateFunction",
-        "lambda:DeleteFunction",
-        "lambda:GetFunction",
-        "lambda:InvokeFunction",
-        "lambda:UpdateFunctionCode",
-        "lambda:UpdateFunctionConfiguration",
-        "apigateway:*",
-        "cloudfront:*",
-        "logs:CreateLogGroup",
-        "logs:DeleteLogGroup",
-        "logs:DescribeLogGroups",
-        "logs:PutRetentionPolicy",
-        "cloudwatch:GetMetricData",
-        "cloudwatch:GetMetricStatistics",
-        "cloudwatch:ListMetrics",
-        "cloudwatch:DescribeAlarms"
+        "s3:HeadObject"
       ],
-      "Resource": "*"
+      "Resource": "arn:aws:s3:::medi-path-ease-uploads/*"
+    },
+    {
+      "Sid": "AllowListBucket",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket"
+      ],
+      "Resource": "arn:aws:s3:::medi-path-ease-uploads",
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": "uploads/*"
+        }
+      }
+    },
+    {
+      "Sid": "DenyDeleteBucket",
+      "Effect": "Deny",
+      "Action": [
+        "s3:DeleteBucket",
+        "s3:DeleteBucketPolicy",
+        "s3:PutBucketPolicy"
+      ],
+      "Resource": "arn:aws:s3:::medi-path-ease-uploads"
     }
   ]
 }
 ```
 
-> 💡 **Note:** Most of the cost is in Bedrock (per-token). A single Claude 3.5 Sonnet query is around $0.003 input + $0.015 output per 1K tokens. A few dozen queries during the workshop cost less than $1. OpenSearch Serverless has a minimum charge of $0.24/OCU/hour — remember to clean up after the workshop.
+6. Attach the policy to the user
+7. **Save Access Key ID and Secret Access Key** (only shown once!)
 
-#### 4. Install local tools
-
-* **AWS CLI v2** (installed in Week 1): `aws --version`
-* **Node.js 18+** and **npm** to build the React frontend (optional if you use the prebuilt one).
-* **Python 3.10+** and **boto3** (already available on Amazon Linux 2023 if you use Cloud9/CloudShell).
+#### 3. Install AWS CLI
 
 ```bash
-# Update AWS CLI & boto3
-pip install --upgrade boto3 awscli
-aws configure  # enter Access Key, Secret Key, region ap-southeast-1, output json
+# Check if installed
+aws --version
+
+# If not installed, download and install AWS CLI v2
+# macOS/Linux:
+curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
+sudo installer -pkg AWSCLIV2.pkg -target /
+
+# Windows: Download from https://aws.amazon.com/cli/
 ```
 
-#### 5. Create the source documents S3 bucket
+#### 4. Configure AWS Credentials
 
 ```bash
-# Create the documents bucket for the Knowledge Base
-aws s3 mb s3://fcaj-bedrock-docs-<your-id> --region ap-southeast-1
-aws s3api put-bucket-versioning \
-  --bucket fcaj-bedrock-docs-<your-id> \
-  --versioning-configuration Status=Enabled
+# Configure credentials for the IAM user
+aws configure
 
-# Upload some sample documents
-curl -o aws-overview.pdf https://docs.aws.amazon.com/whitepapers/latest/aws-overview/introduction.html
-aws s3 cp aws-overview.pdf s3://fcaj-bedrock-docs-<your-id>/
+# Enter the following:
+# AWS Access Key ID [None]: AKIAIOSFODNN7EXAMPLE
+# AWS Secret Access Key [None]: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+# Default region name [None]: ap-southeast-1
+# Default output format [None]: json
 ```
 
-#### 6. Verify the environment
+Verify credentials:
 
 ```bash
-# Verify Bedrock access
-aws bedrock list-foundation-models --region ap-southeast-1 \
-  --query 'modelSummaries[?contains(modelId, `claude`) || contains(modelId, `titan-embed`)].modelId'
-
-# Verify S3 bucket
-aws s3 ls s3://fcaj-bedrock-docs-<your-id>/
-
-# Verify IAM user
 aws sts get-caller-identity
 ```
 
-If all three commands return successfully, you are ready for the next part.
+Expected output:
+```json
+{
+    "UserId": "AIDAIOSFODNN7EXAMPLE",
+    "Account": "123456789012",
+    "Arn": "arn:aws:iam::123456789012:user/medi-path-ease-s3"
+}
+```
 
-![prereq complete](/images/5-Workshop/5.2-Prerequisite/complete.png)
+#### 5. Check Node.js and npm
+
+```bash
+# Check versions
+node --version    # >= 18.x
+npm --version     # >= 9.x
+```
+
+If not installed, download from https://nodejs.org/
+
+#### 6. Clone and Setup Project
+
+```bash
+# Clone project
+cd /path/to/your/projects
+git clone <medi-path-ease-repo>
+
+# Navigate to project directory
+cd medi-path-ease-main/medi-path-ease-main
+
+# Install dependencies
+npm install
+
+# Install AWS SDK for Node.js (already in package.json)
+npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
+```
+
+#### 7. Configure Environment Variables
+
+Copy `.env.example` to `.env` and fill in the information:
+
+```bash
+# Backend config
+PORT=3001
+NODE_ENV=development
+
+# AWS S3 Configuration
+AWS_REGION=ap-southeast-1
+AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE      # Replace with your Access Key
+AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/...     # Replace with your Secret Key
+AWS_S3_BUCKET=medi-path-ease-uploads         # Bucket name
+
+# JWT (for testing authenticated requests)
+JWT_SECRET=your-super-secret-jwt-key-minimum-32-chars
+```
+
+#### 8. Verify Environment
+
+Run verification script:
+
+```bash
+# Verify AWS credentials
+aws s3 ls 2>&1 | head -5
+
+# Verify Node.js
+node -e "console.log('Node OK:', process.version)"
+
+# Test S3 connection (will fail if bucket doesn't exist - OK)
+aws s3api head-bucket --bucket medi-path-ease-uploads 2>&1 || echo "Bucket doesn't exist - will create in next step"
+```
+
+Expected output:
+```
+An error occurred (404) when calling the HeadBucket operation: Not Found
+Bucket doesn't exist - will create in next step
+```
+
+#### 9. Prepare Postman/curl for API Testing
+
+Download Postman or prepare curl commands to test API endpoints.
+
+> ⚠️ **Security Note:** Do not commit `.env` file to Git. Add to `.gitignore` if not already present.
 
 #### References
-* [Amazon Bedrock Model Access](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)
-* [Setting up Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/setting-up.html)
+* [Creating an IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html)
 * [AWS CLI Configuration](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html)
+* [Installing AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
