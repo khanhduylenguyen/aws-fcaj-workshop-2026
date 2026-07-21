@@ -19,8 +19,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
+
+      - name: Clone theme
+        run: |
+          rm -rf themes/hugo-theme-learn
+          git clone --depth=1 https://github.com/matcornic/hugo-theme-learn.git themes/hugo-theme-learn
 
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v3
