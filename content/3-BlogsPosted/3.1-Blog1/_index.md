@@ -1,5 +1,5 @@
 ﻿---
-title: "Blog 1 - Automate AWS Storage Gateway AL2 to AL2023 migration with IaC"
+title: "Blog 1"
 date: 2026-04-12
 weight: 1
 chapter: false

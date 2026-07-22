@@ -1,5 +1,5 @@
 ﻿---
-title: "Blog 3 - Solving automated contract intelligence with Doczy.ai™ on AWS"
+title: "Blog 3"
 date: 2026-06-07
 weight: 3
 chapter: false

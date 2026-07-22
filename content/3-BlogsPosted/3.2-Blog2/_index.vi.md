@@ -1,5 +1,5 @@
 ﻿---
-title: "Blog 2 - Tự động hóa số hóa bệnh án bằng Amazon Bedrock Data Automation và AWS HealthLake"
+title: "Blog 2"
 date: 2026-05-03
 weight: 2
 chapter: false

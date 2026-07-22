@@ -1,5 +1,5 @@
 ﻿---
-title: "Blog 1 - Tự động hóa Migration AWS Storage Gateway từ AL2 sang AL2023 bằng IaC"
+title: "Blog 1"
 date: 2026-04-12
 weight: 1
 chapter: false

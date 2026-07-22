@@ -1,5 +1,5 @@
 ﻿---
-title: "Blog 3 - Giải bài toán đọc hợp đồng tự động với Doczy.ai™ trên AWS"
+title: "Blog 3"
 date: 2026-06-07
 weight: 3
 chapter: false
