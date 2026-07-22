@@ -24,6 +24,8 @@ That's why **AArete** built **Doczy.ai™** — a **contract intelligence** plat
 
 AArete's stack of AWS services is pragmatic and well-engineered:
 
+![Doczy.ai Architecture - Frontend & AWS Services](/images/blog3.jpg)
+
 ```mermaid
 flowchart LR
   User([Enterprise<br>User]) -->|HTTPS| Frontend[Next.js<br>Web App]

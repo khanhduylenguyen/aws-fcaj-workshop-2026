@@ -22,6 +22,8 @@ The technical solution is to **automatically convert unstructured scanned docume
 
 The solution uses a **serverless, event-driven architecture** to automate the entire journey from uploading a PDF file to producing queryable data.
 
+![Amazon Bedrock Data Automation + HealthLake](/images/blog2.jpg)
+
 ```mermaid
 flowchart LR
   A[Hospital /<br>Clinic] -->|Upload PDF| B[Amazon S3<br>input-bucket]

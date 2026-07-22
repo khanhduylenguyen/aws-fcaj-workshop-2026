@@ -24,6 +24,8 @@ Chính vì vậy, công ty **AArete** đã xây dựng **Doczy.ai™** — một
 
 Cách AArete lắp ghép các service AWS rất thực dụng và bài bản:
 
+![Doczy.ai Architecture - Frontend & AWS Services](/images/blog3.jpg)
+
 ```mermaid
 flowchart LR
   User([Người dùng<br>doanh nghiệp]) -->|HTTPS| Frontend[Next.js<br>Web App]

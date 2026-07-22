@@ -16,6 +16,8 @@ Vậy đâu là cách tiếp cận đúng?
 
 ## Giải pháp: Terraform + Ansible
 
+![AWS Storage Gateway Migration](/images/blog1.jpg)
+
 AWS đề xuất một pattern **Infrastructure as Code (IaC)** kết hợp **Terraform** (cấp phát hạ tầng) và **Ansible** (cấu hình & chuyển đổi) giúp di chuyển gateway **mà vẫn giữ nguyên dữ liệu và cấu hình**:
 
 * **Không phải upload lại dữ liệu từ S3** (giữ nguyên Cache Disk)

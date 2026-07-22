@@ -16,6 +16,8 @@ So what's the right approach?
 
 ## Solution: Terraform + Ansible
 
+![AWS Storage Gateway Migration](/images/blog1.jpg)
+
 AWS proposes an **Infrastructure as Code (IaC)** pattern combining **Terraform** (provision infrastructure) and **Ansible** (configure & switch) to migrate gateways **while preserving data and configuration**:
 
 * **No re-upload from S3** (the Cache Disk is preserved)
