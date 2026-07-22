@@ -1,52 +1,32 @@
-﻿---
+---
 title: "Workshop"
-date: 2026-07-20
+date: 2026-01-01
 weight: 5
 chapter: false
 pre: " <b> 5. </b> "
 ---
 
-# Building Medi Path Ease Telemedicine System
+# Deploying the TechMarket E-Commerce Platform on AWS
 
 #### Overview
 
-**Medi Path Ease** is a telemedicine application designed to connect doctors and patients easily, securely, and effectively. The system provides key features:
+In this workshop, we will build and deploy the **TechMarket E-Commerce Platform** using a cloud-native architecture on AWS.
 
-* **Patient Record Management** - Securely store and retrieve medical information
-* **Remote Consultation (Telemedicine)** - Connect patients with doctors via video calls and chat
-* **Medical Document Storage** - Upload and view lab results, prescriptions, medical records
-* **AI Virtual Assistant** - Support answering common health questions
-* **Online Payment** - PayOS payment gateway integration
+The solution leverages AWS managed services including **Amazon ECS Fargate**, **Amazon ECR**, **Amazon S3**, **AWS CodeBuild**, **Application Load Balancer**, **Amazon CloudWatch**, **Amazon Route 53**, and **AWS Certificate Manager (ACM)**, integrated with **MongoDB Atlas** to provide a scalable, secure, highly available, and automated deployment platform.
 
-#### AWS & Cloud Services Used
-
-| Service | Purpose |
-|---------|---------|
-| **Amazon RDS PostgreSQL** | Main relational database for the application |
-| **Amazon S3** | Store medical documents (lab results, prescriptions, EHR) |
-| **Amazon CloudFront** | Global CDN for static content delivery |
-| **Amazon Cognito** | User authentication and management |
-| **Amazon Bedrock** | AI chatbot virtual assistant |
-| **DigitalOcean App Platform** | Node.js/Express application server |
-| **PayOS** | VNPay/QrCode payment gateway |
-
-#### Workshop Outcomes
-
-After completing this workshop, you will have a complete telemedicine system with:
-* Express.js backend running on DigitalOcean
-* PostgreSQL database on AWS RDS
-* Secure file storage with S3 + CloudFront
-* User authentication with Cognito + JWT
-* AI chatbot supporting patients
-* Online payment via PayOS
+Throughout this workshop, you will prepare the project environment, configure networking, containerize the application using Docker, deploy it to Amazon ECS Fargate, configure a custom domain with HTTPS, automate deployment using AWS CodeBuild, monitor system health, perform end-to-end testing, and finally clean up all AWS resources.
 
 #### Content
 
-1. [Architecture Diagram & Overview](5.1-Architecture/)
-2. [RDS PostgreSQL Database Configuration](5.2-RDS-PostgreSQL/)
-3. [S3 Storage & CloudFront Service](5.3-S3-CloudFront/)
-4. [User Authentication with Amazon Cognito](5.4-Cognito/)
-5. [AI Chatbot with Amazon Bedrock](5.5-Bedrock-AI/)
-6. [DigitalOcean Configuration & PayOS Integration](5.6-DigitalOcean-PayOS/)
-7. [Demo - Real Application Interface](5.7-Demo/)
-8. [Cleanup Resources](5.8-Cleanup/)
+1. [Workshop Overview](5.1-Workshop-overview/)
+2. [Prerequisite](5.2-Prerequiste/)
+3. [Project Foundation](5.3-Project-foundation/)
+4. [Networking](5.4-Networking/)
+5. [Application Services](5.5-Application-Services/)
+6. [Containerization](5.6-Containerization/)
+7. [Deploy Application](5.7-Deploy-Application/)
+8. [Domain and HTTPS](5.8-Domain-and-HTTPS/)
+9. [CI/CD](5.9-CI-CD/)
+10. [Monitoring](5.10-Monitoring/)
+11. [Testing](5.11-Testing/)
+12. [Cleanup](5.12-Cleanup/)

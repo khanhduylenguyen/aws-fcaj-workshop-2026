@@ -1,52 +1,32 @@
-﻿---
+---
 title: "Workshop"
-date: 2026-07-20
+date: 2026-01-01
 weight: 5
 chapter: false
 pre: " <b> 5. </b> "
 ---
 
-# Xây dựng Hệ thống Y tế Từ xa Medi Path Ease
+# Triển khai nền tảng thương mại điện tử TechMarket trên AWS
 
 #### Tổng quan
 
-**Medi Path Ease** là một ứng dụng y tế từ xa (Telemedicine) được xây dựng với mục tiêu kết nối bác sĩ và bệnh nhân một cách dễ dàng, an toàn và hiệu quả. Hệ thống cung cấp các tính năng chính:
+Trong workshop này, chúng ta sẽ xây dựng và triển khai **nền tảng thương mại điện tử TechMarket** bằng kiến trúc cloud-native trên AWS.
 
-* **Quản lý hồ sơ bệnh nhân** - Lưu trữ và truy xuất thông tin y tế một cách bảo mật
-* **Tư vấn từ xa (Telemedicine)** - Kết nối bệnh nhân với bác sĩ qua video call và chat
-* **Lưu trữ tài liệu y tế** - Upload và xem kết quả xét nghiệm, đơn thuốc, hồ sơ bệnh án
-* **Trợ lý ảo AI** - Hỗ trợ trả lời câu hỏi thường gặp về sức khỏe
-* **Thanh toán trực tuyến** - Tích hợp cổng thanh toán PayOS
+Giải pháp sử dụng các dịch vụ AWS như **Amazon ECS Fargate**, **Amazon ECR**, **Amazon S3**, **AWS CodeBuild**, **Application Load Balancer**, **Amazon CloudWatch**, **Amazon Route 53** và **AWS Certificate Manager (ACM)**, kết hợp với **MongoDB Atlas** nhằm xây dựng một nền tảng có khả năng mở rộng, bảo mật, tính sẵn sàng cao và hỗ trợ triển khai tự động.
 
-#### Các dịch vụ AWS & Cloud sử dụng
+Trong suốt workshop này, bạn sẽ chuẩn bị môi trường dự án, cấu hình hạ tầng mạng, tích hợp các dịch vụ của ứng dụng, đóng gói ứng dụng bằng Docker, triển khai lên Amazon ECS Fargate, cấu hình tên miền và HTTPS, tự động hóa quá trình triển khai bằng AWS CodeBuild, giám sát hệ thống, thực hiện kiểm thử toàn bộ ứng dụng và cuối cùng dọn dẹp tất cả tài nguyên AWS đã tạo.
 
-| Dịch vụ | Mục đích sử dụng |
-|---------|-------------------|
-| **Amazon RDS PostgreSQL** | Cơ sở dữ liệu quan hệ chính cho ứng dụng |
-| **Amazon S3** | Lưu trữ tài liệu y tế (lab results, prescriptions, EHR) |
-| **Amazon CloudFront** | CDN phân phối nội dung tĩnh toàn cầu |
-| **Amazon Cognito** | Xác thực và quản lý người dùng |
-| **Amazon Bedrock** | Trợ lý ảo AI chatbot |
-| **DigitalOcean App Platform** | Máy chủ ứng dụng Node.js/Express |
-| **PayOS** | Cổng thanh toán VNPay/QrCode |
+#### Nội dung
 
-#### Kết quả đạt được sau workshop
-
-Sau khi hoàn thành, bạn sẽ có một hệ thống telemedicine hoàn chỉnh với:
-* Backend Express.js chạy trên DigitalOcean
-* Cơ sở dữ liệu PostgreSQL trên AWS RDS
-* Hệ thống lưu trữ file an toàn với S3 + CloudFront
-* Xác thực người dùng với Cognito + JWT
-* Chatbot AI hỗ trợ bệnh nhân
-* Thanh toán trực tuyến qua PayOS
-
-#### Nội dung workshop
-
-1. [Sơ đồ kiến trúc & Tổng quan](5.1-Architecture/)
-2. [Cấu hình Cơ sở dữ liệu RDS PostgreSQL](5.2-RDS-PostgreSQL/)
-3. [Dịch vụ Lưu trữ S3 & CloudFront](5.3-S3-CloudFront/)
-4. [Xác thực người dùng với Amazon Cognito](5.4-Cognito/)
-5. [Trợ lý ảo AI Chatbot với Amazon Bedrock](5.5-Bedrock-AI/)
-6. [Cấu hình DigitalOcean & Tích hợp PayOS](5.6-DigitalOcean-PayOS/)
-7. [Demo Giao diện Ứng dụng Thực tế](5.7-Demo/)
-8. [Dọn dẹp tài nguyên](5.8-Cleanup/)
+1. [Tổng quan Workshop](5.1-Workshop-overview/)
+2. [Điều kiện chuẩn bị](5.2-Prerequiste/)
+3. [Chuẩn bị nền tảng dự án](5.3-Project-foundation/)
+4. [Cấu hình hạ tầng mạng](5.4-Networking/)
+5. [Cấu hình các dịch vụ ứng dụng](5.5-Application-Services/)
+6. [Đóng gói ứng dụng bằng Docker](5.6-Containerization/)
+7. [Triển khai ứng dụng](5.7-Deploy-Application/)
+8. [Cấu hình tên miền và HTTPS](5.8-Domain-and-HTTPS/)
+9. [Thiết lập CI/CD](5.9-CI-CD/)
+10. [Giám sát hệ thống](5.10-Monitoring/)
+11. [Kiểm thử hệ thống](5.11-Testing/)
+12. [Dọn dẹp tài nguyên](5.12-Cleanup/)

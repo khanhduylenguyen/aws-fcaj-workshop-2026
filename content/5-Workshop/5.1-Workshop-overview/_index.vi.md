@@ -1,104 +1,128 @@
 ---
-title : "Giới thiệu workshop"
-date : 2026-07-20
+title : "Tổng quan Workshop"
+date : 2026-01-01
 weight : 1
 chapter : false
 pre : " <b> 5.1. </b> "
 ---
 
-#### Giới thiệu về Amazon S3 trong Medi Path Ease
+### Mục tiêu
 
-**Amazon S3 (Simple Storage Service)** là dịch vụ lưu trữ object của AWS, được sử dụng trong Medi Path Ease để lưu trữ các tài liệu y tế quan trọng của bệnh nhân.
+Workshop này hướng dẫn triển khai ứng dụng **Second-Hand Marketplace** trên nền tảng AWS bằng cách sử dụng kiến trúc Cloud-Native, các dịch vụ được quản lý (Managed Services), triển khai container và quy trình CI/CD tự động. Sau khi hoàn thành workshop, bạn sẽ có thể triển khai một ứng dụng web hoàn chỉnh với khả năng mở rộng, tính sẵn sàng cao và bảo mật.
 
-#### Các tính năng S3 được sử dụng
+---
 
-* **Lưu trữ kết quả xét nghiệm (Lab Results):** Upload và truy xuất file PDF kết quả xét nghiệm máu, nước tiểu, và các xét nghiệm chuyên sâu.
-* **Lưu trữ đơn thuốc (Prescriptions):** Lưu trữ hình ảnh đơn thuốc được chụp hoặc scan.
-* **Lưu trữ hồ sơ điện tử (EHR):** Lưu trữ các tài liệu hồ sơ bệnh án điện tử.
-* **File đính kèm telemedicine:** Lưu trữ hình ảnh, tài liệu được chia sẻ trong buổi khám từ xa.
-* **Presigned URLs:** Tạo URL tạm thời để bệnh nhân và bác sĩ xem file mà không cần public access.
+## 1. Giới thiệu bài toán và giải pháp
 
-#### Tại sao dùng S3 thay vì lưu trữ trong database?
+**Second-Hand Marketplace** là một ứng dụng web cho phép người dùng đăng bán, tìm kiếm và mua các sản phẩm đã qua sử dụng. Hệ thống hỗ trợ các chức năng như đăng ký tài khoản, đăng nhập, quản lý danh mục, quản lý sản phẩm, tải lên hình ảnh sản phẩm và tìm kiếm sản phẩm.
 
-* **Bảo mật:** File được lưu trữ riêng biệt với database, chỉ truy cập qua presigned URL có thời hạn.
-* **Hiệu suất:** Object storage tối ưu cho file lớn (PDF, hình ảnh) hơn so với lưu trữ trong MongoDB.
-* **Chi phí:** S3 Standard rẻ hơn so với MongoDB Atlas cho việc lưu trữ file lớn.
-* **Durability:** 99.999999999% (11 nines) độ bền dữ liệu.
-* **Versioning:** Có thể khôi phục file nếu bị xóa nhầm.
+Thay vì triển khai ứng dụng trên một máy chủ truyền thống, workshop này áp dụng kiến trúc Cloud-Native trên AWS. Ứng dụng được đóng gói bằng **Docker** và triển khai trên **Amazon ECS Fargate**, hình ảnh sản phẩm được lưu trữ trên **Amazon S3**, trong khi dữ liệu được lưu trữ trên **MongoDB Atlas**.
 
-#### Cấu trúc folder trong S3 bucket
+Để tăng cường tính bảo mật và khả năng quản lý, các thông tin nhạy cảm được lưu trong **AWS Secrets Manager**. Đồng thời, **Application Load Balancer**, **Amazon Route 53** và **AWS Certificate Manager (ACM)** được sử dụng để cung cấp truy cập an toàn thông qua giao thức HTTPS. Quá trình triển khai được tự động hóa bằng **AWS CodeBuild**, và hệ thống được giám sát thông qua **Amazon CloudWatch**.
 
-```
-medi-path-ease-uploads/
-├── lab-results/           # Kết quả xét nghiệm
-│   └── <patientId>/
-│       └── <yyyy>/
-│           └── <mm>/
-├── prescriptions/         # Đơn thuốc
-│   └── <patientId>/
-│       └── <yyyy>/
-│           └── <mm>/
-├── ehr/                  # Hồ sơ bệnh án điện tử
-│   └── <patientId>/
-│       └── <yyyy>/
-│           └── <mm>/
-└── chat-attachments/     # File đính kèm chat telemedicine
-    └── <patientId>/
-        └── <yyyy>/
-            └── <mm>/
-```
+---
 
-#### Tổng quan về workshop
+## 2. Kiến trúc hệ thống
 
-Trong workshop này, bạn sẽ cấu hình và tích hợp Amazon S3 vào hệ thống Medi Path Ease:
+Kiến trúc của hệ thống bao gồm các thành phần chính sau:
 
-* **Cloud side (AWS):** Tạo S3 bucket với cấu hình bảo mật, IAM policies, presigned URLs.
-* **Backend side:** Tích hợp AWS SDK vào Express server, xây dựng API upload/download.
-* **Frontend side:** Kết nối React UI với backend để upload file và hiển thị presigned URLs.
+- Người dùng (Client)
+- Tên miền và HTTPS
+- Hạ tầng mạng
+- Ứng dụng chạy trên Container
+- Dịch vụ lưu trữ
+- Quy trình CI/CD
+- Giám sát hệ thống
 
-```mermaid
-flowchart TB
-  subgraph Frontend
-    UI[React UI<br>Upload/File Viewer]
-  end
+**Hình 1 – Kiến trúc hệ thống Second-Hand Marketplace**
 
-  subgraph Backend["Express Backend :3001"]
-    API[API Routes<br>/api/uploads/*]
-    S3Service[S3 Service<br>s3Service.js]
-  end
+![Kiến trúc hệ thống](/images/5-Workshop/5.1-Workshop-overview/system_architecture.jpg)
 
-  subgraph AWS["AWS Region ap-southeast-1"]
-    S3[(S3 Bucket<br>medi-path-ease-uploads)]
-    IAM[IAM User<br>Restricted Permissions]
-  end
+---
 
-  UI -->|1. Upload File| API
-  API -->|2. PutObject| S3Service
-  S3Service -->|3. AWS SDK| S3
-  S3 -->|4. ETag| S3Service
-  S3Service -->|5. Key/Metadata| API
-  API -->|6. Success Response| UI
-  
-  UI -->|7. Request View| API
-  API -->|8. GetSignedUrl| S3Service
-  S3Service -->|9. Presigned URL (1h)| API
-  API -->|10. Redirect/URL| UI
-  UI -->|11. Fetch File| S3
+## 3. Quy trình hoạt động của hệ thống
 
-  IAM -.->|Credentials| S3Service
-```
+Luồng xử lý chính của hệ thống diễn ra theo các bước sau:
 
-#### Kết quả sau workshop
+1. Người dùng truy cập website thông qua tên miền được quản lý bởi **Amazon Route 53**.
 
-Bạn sẽ có:
-* S3 bucket được cấu hình với versioning và encryption.
-* IAM user với quyền hạn chế (least privilege).
-* Backend API hoàn chỉnh cho upload/download file.
-* Frontend tích hợp để upload kết quả xét nghiệm và đơn thuốc.
-* Presigned URL system để bảo mật truy cập file.
+2. **AWS Certificate Manager (ACM)** cung cấp chứng chỉ SSL/TLS để mã hóa toàn bộ kết nối HTTPS.
 
-#### Tài liệu tham khảo
-* [Amazon S3 Documentation](https://docs.aws.amazon.com/s3/index.html)
-* [AWS SDK for JavaScript v3](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/)
-* [S3 Presigned URLs](https://docs.aws.amazon.com/AmazonS3/latest/userguide/PresignedUrlUploadObject.html)
-* [IAM Best Practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)
+3. Mọi yêu cầu từ người dùng được chuyển đến **Application Load Balancer (ALB)**.
+
+4. ALB phân phối lưu lượng truy cập đến các container đang chạy trên **Amazon ECS Fargate**.
+
+5. Ứng dụng Node.js xử lý nghiệp vụ và giao tiếp với **MongoDB Atlas** để lưu trữ cũng như truy xuất dữ liệu.
+
+6. Hình ảnh sản phẩm được tải lên và lưu trữ trên **Amazon S3**.
+
+7. Các thông tin cấu hình nhạy cảm như chuỗi kết nối cơ sở dữ liệu được lấy từ **AWS Secrets Manager**.
+
+8. Nhật ký hoạt động (Logs) và các chỉ số hệ thống (Metrics) được gửi đến **Amazon CloudWatch** để phục vụ việc giám sát và xử lý sự cố.
+
+9. Khi mã nguồn được cập nhật lên GitHub, **AWS CodeBuild** sẽ tự động xây dựng Docker Image, đẩy Image lên **Amazon ECR** và triển khai phiên bản mới lên **Amazon ECS**.
+
+---
+
+## 4. Các dịch vụ được sử dụng
+
+Workshop sử dụng các dịch vụ AWS sau:
+
+### Hạ tầng mạng
+
+- Amazon VPC
+- Public Subnet
+- Private Subnet
+- Internet Gateway
+- NAT Gateway
+- Security Groups
+
+### Dịch vụ tính toán
+
+- Amazon ECS Fargate
+- Application Load Balancer
+
+### Lưu trữ
+
+- Amazon S3
+- MongoDB Atlas
+
+### Container
+
+- Docker
+- Amazon Elastic Container Registry (Amazon ECR)
+
+### Bảo mật
+
+- AWS IAM
+- AWS Secrets Manager
+- AWS Certificate Manager (ACM)
+
+### Tên miền
+
+- Amazon Route 53
+
+### CI/CD
+
+- GitHub
+- AWS CodeBuild
+
+### Giám sát
+
+- Amazon CloudWatch
+
+---
+
+## 5. Kết quả đạt được
+
+Sau khi hoàn thành workshop, bạn sẽ có thể:
+
+- Triển khai ứng dụng Node.js dưới dạng container trên Amazon ECS Fargate.
+- Xây dựng hạ tầng mạng bằng Amazon VPC.
+- Kết nối và sử dụng MongoDB Atlas làm cơ sở dữ liệu.
+- Lưu trữ hình ảnh sản phẩm trên Amazon S3.
+- Bảo vệ thông tin cấu hình bằng AWS Secrets Manager.
+- Cấu hình tên miền và HTTPS với Amazon Route 53 và AWS Certificate Manager.
+- Thiết lập quy trình CI/CD tự động bằng GitHub, AWS CodeBuild, Amazon ECR và Amazon ECS.
+- Giám sát hoạt động của ứng dụng thông qua Amazon CloudWatch.
+- Xóa toàn bộ tài nguyên AWS sau khi hoàn thành workshop để tránh phát sinh chi phí.
