@@ -6,7 +6,7 @@ chapter: false
 pre: " <b> 1. </b> "
 ---
 
-Throughout the 12-week internship at **Amazon Web Services Vietnam** (the **First Cloud AI Journey 2026** program), I explored and practiced hands-on with many AWS services across the **Cloud + AI/ML** ecosystem. The full journey is documented in the worklogs below.
+Throughout the 15-week internship at **Amazon Web Services Vietnam** (the **First Cloud AI Journey 2026** program), I explored and practiced hands-on with many AWS services across the **Cloud + AI/ML** ecosystem. The full journey is documented in the worklogs below.
 
 **Summary of 12 weeks:**
 

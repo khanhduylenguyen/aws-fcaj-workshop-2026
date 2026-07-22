@@ -6,7 +6,7 @@ chapter: false
 pre: " <b> 6. </b> "
 ---
 
-Trong suốt **12 tuần thực tập tại chương trình AWS First Cloud Job (FCAJ) Workshop** từ **01/04/2026** đến **06/07/2026**, tôi đã có cơ hội học hỏi, rèn luyện và áp dụng kiến thức nền tảng về điện toán đám mây vào môi trường làm việc thực tế.
+Trong suốt **15 tuần thực tập tại chương trình AWS First Cloud Job (FCAJ) Workshop** từ **17/04/2026** đến **30/07/2026**, tôi đã có cơ hội học hỏi, rèn luyện và áp dụng kiến thức nền tảng về điện toán đám mây vào môi trường làm việc thực tế.
 
 Tôi đã tham gia **xây dựng một sản phẩm web full-stack trên nền tảng AWS** (bao gồm thiết kế cơ sở dữ liệu, phát triển Backend với Spring Boot, Frontend với ReactJS, tích hợp các dịch vụ AWS như S3, RDS, Bedrock và triển khai CI/CD qua GitHub Actions), qua đó cải thiện đáng kể các kỹ năng: **lập trình Java/Node.js, thiết kế hệ thống, làm việc nhóm theo Agile, viết báo cáo kỹ thuật bằng tiếng Anh và tiếng Việt, và đặc biệt là tư duy "cloud-native"**.
 

@@ -17,7 +17,7 @@ pre: " <b> 4. </b> "
 > * Outcomes or value gained (lessons learned, new skills, contribution to the team/project)
 > * This listing helps demonstrate your actual participation as well as the soft skills and experience you have gained from each event.
 
-During my 12-week internship in the **First Cloud AI Journey 2026** program, I joined **2 offline events** organized by the AWS Vietnam community. Each one was a memorable experience with new Cloud/AI insights, meaningful gifts from the organizers, and direct networking opportunities with senior engineers.
+During my 15-week internship in the **First Cloud AI Journey 2026** program, I joined **2 offline events** organized by the AWS Vietnam community. Each one was a memorable experience with new Cloud/AI insights, meaningful gifts from the organizers, and direct networking opportunities with senior engineers.
 
 ### [Event 1](4.1-Event1/)
 &emsp;**Event Name:** FCAJ Community Day MAY 2026

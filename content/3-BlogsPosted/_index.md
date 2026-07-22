@@ -6,7 +6,7 @@ chapter: false
 pre: " <b> 3. </b> "
 ---
 
-During the 12-week internship I published **3 in-depth technical blogs** on [AWS Study Group](https://www.facebook.com/groups/awsstudygroupfcj) — analyzing real-world case studies on AWS, covering new service features, cost optimization with IaC, and using AI services to solve concrete enterprise problems.
+During the 15-week internship I published **3 in-depth technical blogs** on [AWS Study Group](https://www.facebook.com/groups/awsstudygroupfcj) — analyzing real-world case studies on AWS, covering new service features, cost optimization with IaC, and using AI services to solve concrete enterprise problems.
 
 | # | Topic | Category (per FCAJ requirement) | Date |
 |---|---|---|---|

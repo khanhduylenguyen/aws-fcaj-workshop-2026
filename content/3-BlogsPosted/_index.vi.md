@@ -6,7 +6,7 @@ chapter: false
 pre: " <b> 3. </b> "
 ---
 
-Trong 12 tuần thực tập, mình đã đăng **3 bài blog kỹ thuật chuyên sâu** trên [AWS Study Group](https://www.facebook.com/groups/awsstudygroupfcj) — phân tích các case study thực tế trên AWS, bao gồm tính năng mới của services, tối ưu chi phí bằng IaC, và sử dụng AI services để giải quyết bài toán doanh nghiệp cụ thể.
+Trong 15 tuần thực tập, mình đã đăng **3 bài blog kỹ thuật chuyên sâu** trên [AWS Study Group](https://www.facebook.com/groups/awsstudygroupfcj) — phân tích các case study thực tế trên AWS, bao gồm tính năng mới của services, tối ưu chi phí bằng IaC, và sử dụng AI services để giải quyết bài toán doanh nghiệp cụ thể.
 
 | # | Đề tài | Phạm trù (theo yêu cầu FCAJ) | Ngày đăng |
 |---|---|---|---|

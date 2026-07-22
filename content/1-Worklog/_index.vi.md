@@ -6,7 +6,7 @@ chapter: false
 pre: " <b> 1. </b> "
 ---
 
-Trong suốt 12 tuần thực tập tại **Amazon Web Services Vietnam** (chương trình **First Cloud AI Journey 2026**), mình đã lần lượt tìm hiểu và thực hành trên nhiều dịch vụ AWS trong hệ sinh thái **Cloud + AI/ML**. Toàn bộ hành trình được ghi lại trong các worklog bên dưới.
+Trong suốt 15 tuần thực tập tại **Amazon Web Services Vietnam** (chương trình **First Cloud AI Journey 2026**), mình đã lần lượt tìm hiểu và thực hành trên nhiều dịch vụ AWS trong hệ sinh thái **Cloud + AI/ML**. Toàn bộ hành trình được ghi lại trong các worklog bên dưới.
 
 **Tóm tắt nội dung 12 tuần:**
 

@@ -17,7 +17,7 @@ pre: " <b> 4. </b> "
 > * Kết quả hoặc giá trị đạt được (bài học, kỹ năng mới, đóng góp cho nhóm/dự án)
 > * Việc liệt kê này giúp thể hiện rõ sự tham gia thực tế của bạn, cũng như các kỹ năng mềm và kinh nghiệm bạn đã tích lũy qua từng sự kiện.
 
-Trong 12 tuần thực tập tại **First Cloud AI Journey 2026**, mình đã tham gia **2 sự kiện offline** của cộng đồng AWS Việt Nam. Mỗi sự kiện là một trải nghiệm đáng nhớ với những kiến thức Cloud/AI mới mẻ, phần quà ý nghĩa từ ban tổ chức, và cơ hội kết nối trực tiếp với cộng đồng kỹ sư chất lượng cao.
+Trong 15 tuần thực tập tại **First Cloud AI Journey 2026**, mình đã tham gia **2 sự kiện offline** của cộng đồng AWS Việt Nam. Mỗi sự kiện là một trải nghiệm đáng nhớ với những kiến thức Cloud/AI mới mẻ, phần quà ý nghĩa từ ban tổ chức, và cơ hội kết nối trực tiếp với cộng đồng kỹ sư chất lượng cao.
 
 ### [Event 1](4.1-Event1/)
 &emsp;**Tên sự kiện:** FCAJ Community Day MAY 2026

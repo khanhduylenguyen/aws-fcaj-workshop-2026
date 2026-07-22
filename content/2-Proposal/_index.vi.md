@@ -254,7 +254,7 @@ Dự án được triển khai thông qua các giai đoạn sau:
 ## Kết quả kỹ thuật
 
 Dự án hoàn thành sẽ cung cấp:
-
+ 
 - Một nền tảng mua bán đồ cũ cloud-native được đóng gói hoàn toàn bằng container.
 - Quy trình triển khai CI/CD tự động sử dụng GitHub và AWS CodeBuild.
 - Hệ thống lưu trữ hình ảnh đáng tin cậy sử dụng Amazon S3.

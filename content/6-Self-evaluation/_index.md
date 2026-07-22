@@ -6,7 +6,7 @@ chapter: false
 pre: " <b> 6. </b> "
 ---
 
-During my **12-week internship in the AWS First Cloud Job (FCAJ) Workshop** from **01/04/2026** to **06/07/2026**, I had the opportunity to learn, practice, and apply my foundational cloud knowledge in a real working environment.
+During my **15-week internship in the AWS First Cloud Job (FCAJ) Workshop** from **04/17/2026** to **07/30/2026**, I had the opportunity to learn, practice, and apply my foundational cloud knowledge in a real working environment.
 
 I participated in **building a full-stack web product on AWS** (including database design, Backend development with Spring Boot, Frontend with ReactJS, integration of AWS services such as S3, RDS, Bedrock, and CI/CD deployment via GitHub Actions), which significantly improved my skills in: **Java/Node.js programming, system design, Agile teamwork, technical reporting in both Vietnamese and English, and especially "cloud-native" thinking**.
 
