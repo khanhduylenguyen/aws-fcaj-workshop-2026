@@ -10,6 +10,10 @@ pre : " <b> 5.11. </b> "
 
 Phần này trình bày quá trình triển khai hoàn chỉnh nền tảng thương mại điện tử TechMarket trên AWS. Đồng thời minh họa các giao diện chính của ứng dụng và giải thích cách từng chức năng tương tác với hạ tầng đám mây đã triển khai, bao gồm Amazon ECS Fargate, Amazon S3, MongoDB Atlas, Amazon Route 53, AWS Certificate Manager (ACM), Application Load Balancer, Amazon CloudWatch, Amazon ECR và AWS CodeBuild.
 
+### Demo Video
+
+{{< youtube jmZskrHVbGo >}}
+
 ---
 
 # 1. Trang web khách hàng
