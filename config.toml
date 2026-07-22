@@ -1,6 +1,6 @@
 baseURL = "https://khanhduylenguyen.github.io/aws-fcaj-workshop/"
 relativeURLs = false
-canonifyURLs = false
+canonifyURLs = true
 defaultContentLanguage = "en" # Chuyển về "en" làm cấu trúc gốc để sửa lỗi nhận diện ngôn ngữ
 
 # Thay đổi theme mặc định khi build trang web với Hugo
