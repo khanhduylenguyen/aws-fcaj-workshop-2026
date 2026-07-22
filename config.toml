@@ -1,4 +1,4 @@
-baseURL = "https://khanhduylenguyen.github.io/aws-fcaj-workshop/"
+baseURL = "https://khanhduylenguyen.github.io/aws-fcaj-workshop-2026/"
 relativeURLs = false
 canonifyURLs = true
 defaultContentLanguage = "en" # Chuyển về "en" làm cấu trúc gốc để sửa lỗi nhận diện ngôn ngữ
