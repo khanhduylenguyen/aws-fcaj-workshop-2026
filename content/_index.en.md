@@ -26,7 +26,7 @@ avatar: "https://static.topcv.vn/avatars/mXbxgbJXD8htOTtsN6Io_69b975b3a3629_cvtp
 
 &emsp; **Internship Position:** Workforce Bootcamp - First Cloud AI Journey
 
-&emsp; **Internship Duration:** From 12/04/2026 to 12/07/2026
+&emsp; **Internship Duration:** From 17/04/2026 to 30/07/2026
 
 
 ![Your profile picture]({{< param "avatar" >}})
